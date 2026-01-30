@@ -2,7 +2,7 @@
 <html lang="sk">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Done!</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#F2F2F7" />
@@ -13,12 +13,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Vite transformuje src/main.jsx na správny produkčný súbor -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js');
-        });
-      }
+      // Dočasne vypnuté pre test na mobile
+      // if ('serviceWorker' in navigator) {
+      //   window.addEventListener('load', () => {
+      //     navigator.serviceWorker.register('sw.js');
+      //   });
+      // }
     </script>
   </body>
 </html>
