@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   limit 
 } from 'firebase/firestore';
+import { translations } from './translations';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -22,15 +23,13 @@ function App() {
   const [hasMore, setHasMore] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [feedback, setFeedback] = useState('');
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'sk');
 
-  const motivations = [
-    'Skvelá práca! Len tak ďalej. 🚀',
-    'Ďalší zárez! Ide ti to karta. 🔥',
-    'Malá výhra, veľký posun. 👏',
-    'Si nezastaviteľný! Čo bude ďalej? 💪',
-    'Dobrá trefa! Každý krok sa počíta. ✨',
-    'Bum! A je to tam. 🎈'
-  ];
+  const t = translations[lang];
+
+  useEffect(() => {
+    localStorage.setItem('lang', lang);
+  }, [lang]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -88,7 +87,7 @@ function App() {
         category: 'default'
       });
       setInputText('');
-      const randomMsg = motivations[Math.floor(Math.random() * motivations.length)];
+      const randomMsg = t.motivations[Math.floor(Math.random() * t.motivations.length)];
       setFeedback(randomMsg);
       setTimeout(() => setFeedback(''), 4000);
     } catch (error) {
@@ -120,22 +119,25 @@ function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-apple-bg">
-        <h1 className="text-5xl font-extrabold mb-2 tracking-tight text-apple-text">Done!</h1>
-        <p className="text-apple-secondary mb-12 text-center max-w-xs">Zapisuj si svoje víťazstvá každý deň.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-apple-bg text-center">
+        <h1 className="text-5xl font-extrabold mb-2 tracking-tight text-apple-text">{t.title}</h1>
+        <p className="text-apple-secondary mb-12 max-w-xs">{t.subtitle}</p>
         <button 
           onClick={handleLogin}
           className="w-full max-w-xs bg-apple-text text-apple-bg py-4 rounded-2xl font-semibold hover:opacity-90 transition-all active:scale-95 shadow-xl"
         >
-          Prihlásiť sa cez Google
+          {t.login}
         </button>
+        <div className="mt-8 flex gap-4">
+          <button onClick={() => setLang('sk')} className={`text-sm ${lang === 'sk' ? 'font-bold text-apple-text' : 'text-apple-secondary'}`}>SK</button>
+          <button onClick={() => setLang('en')} className={`text-sm ${lang === 'en' ? 'font-bold text-apple-text' : 'text-apple-secondary'}`}>EN</button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-apple-bg pb-32 transition-colors duration-300">
-      {/* Motivational Toast */}
       <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
         feedback ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0 pointer-events-none'
       }`}>
@@ -151,23 +153,29 @@ function App() {
         <div className="max-w-xl mx-auto flex justify-between items-end">
           <div>
             <p className="text-xs font-semibold text-apple-secondary uppercase tracking-widest mb-1">
-              {new Date().toLocaleDateString('sk-SK', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date().toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
-            <h1 className="text-4xl font-bold tracking-tight text-apple-text">Done!</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-apple-text">{t.title}</h1>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {user.photoURL && (
-              <img 
-                src={user.photoURL} 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full border border-apple-border shadow-sm"
-              />
-            )}
+            <div className="flex items-center gap-3">
+              <div className="flex gap-2 mr-2">
+                <button onClick={() => setLang('sk')} className={`text-[10px] font-bold px-2 py-1 rounded ${lang === 'sk' ? 'bg-apple-text text-apple-bg' : 'text-apple-secondary border border-apple-border'}`}>SK</button>
+                <button onClick={() => setLang('en')} className={`text-[10px] font-bold px-2 py-1 rounded ${lang === 'en' ? 'bg-apple-text text-apple-bg' : 'text-apple-secondary border border-apple-border'}`}>EN</button>
+              </div>
+              {user.photoURL && (
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full border border-apple-border shadow-sm"
+                />
+              )}
+            </div>
             <button 
               onClick={handleLogout}
               className="text-xs font-medium text-apple-secondary hover:text-apple-text active:opacity-50"
             >
-              Odhlásiť
+              {t.logout}
             </button>
           </div>
         </div>
@@ -184,7 +192,7 @@ function App() {
                 <p className="text-[17px] text-apple-text leading-tight font-normal">{log.text}</p>
                 {log.timestamp && (
                   <span className="text-[13px] text-apple-secondary mt-1">
-                    {new Date(log.timestamp.seconds * 1000).toLocaleTimeString('sk-SK', {
+                    {new Date(log.timestamp.seconds * 1000).toLocaleTimeString(lang === 'sk' ? 'sk-SK' : 'en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
@@ -213,7 +221,7 @@ function App() {
           ))}
           {logs.length === 0 && (
             <div className="text-center py-12 text-apple-secondary font-medium">
-              Zatiaľ žiadne záznamy.
+              {t.noLogs}
             </div>
           )}
         </div>
@@ -224,7 +232,7 @@ function App() {
               onClick={() => setLimitCount(prev => prev + 20)}
               className="text-sm font-semibold text-apple-secondary hover:text-apple-text active:opacity-50"
             >
-              Načítať staršie
+              {t.loadMore}
             </button>
           </div>
         )}
@@ -236,7 +244,7 @@ function App() {
             type="text" 
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Zapíš si malú (aj veľkú) výhru..."
+            placeholder={t.placeholder}
             className="flex-1 bg-transparent border-none px-5 py-4 focus:ring-0 outline-none text-[17px] text-apple-text placeholder:text-apple-secondary"
           />
           <button 
