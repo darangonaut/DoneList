@@ -4,14 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Done!</title>
+    <script>
+      // Lapač chýb pre iPhone
+      window.onerror = function(msg, url, line, col, error) {
+        alert("CHYBA: " + msg + "\nLinka: " + line + "\nURL: " + url);
+        return false;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        alert("ASYNC CHYBA: " + event.reason);
+      });
+      console.log("Debug skript nabehol");
+    </script>
     <style>
       body { background-color: #F2F2F7; margin: 0; }
       @media (prefers-color-scheme: dark) { body { background-color: #000000; } }
     </style>
-    <script type="module" crossorigin src="/DoneList/assets/index-eU2ouRou.js"></script>
-    <link rel="stylesheet" crossorigin href="/DoneList/assets/index-D9OmfOcI.css">
+    <script type="module" crossorigin src="./assets/index-CFWUe1Xg.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-D9OmfOcI.css">
   </head>
   <body>
     <div id="root"></div>
+    <!-- RELATÍVNA CESTA BEZ ÚVODNEJ LOMKY -->
   </body>
 </html>
