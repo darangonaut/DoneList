@@ -2,28 +2,22 @@
 <html lang="sk">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Done!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Done! - Test</title>
     <script>
-      // Lapač chýb pre iPhone
-      window.onerror = function(msg, url, line, col, error) {
-        alert("CHYBA: " + msg + "\nLinka: " + line + "\nURL: " + url);
-        return false;
-      };
-      window.addEventListener('unhandledrejection', function(event) {
-        alert("ASYNC CHYBA: " + event.reason);
-      });
-      console.log("Debug skript nabehol");
+      // Tento alert sa spustí okamžite
+      alert("HTML SÚBOR NAČÍTANÝ - VERZIA 5");
     </script>
     <style>
-      body { background-color: #F2F2F7; margin: 0; }
-      @media (prefers-color-scheme: dark) { body { background-color: #000000; } }
+      body { background-color: white; color: black; font-family: sans-serif; padding: 20px; }
     </style>
-    <script type="module" crossorigin src="./assets/index-CFWUe1Xg.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-D9OmfOcI.css">
+    <script type="module" crossorigin src="/DoneList/assets/index-CJTlKXyp.js"></script>
+    <link rel="stylesheet" crossorigin href="/DoneList/assets/index-CYKdnS65.css">
   </head>
   <body>
-    <div id="root"></div>
-    <!-- RELATÍVNA CESTA BEZ ÚVODNEJ LOMKY -->
+    <div id="root">
+      <h1 style="color: red;">AK VIDÍŠ TENTO TEXT, HTML JE NOVÉ</h1>
+      <p>Načítavam aplikáciu...</p>
+    </div>
   </body>
 </html>
