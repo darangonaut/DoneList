@@ -1,5 +1,11 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  browserPopupRedirectResolver, 
+  browserSessionPersistence,
+  setPersistence
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -13,5 +19,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Nastavenie perzistencie a resolvera pre lepšiu podporu Safari
+setPersistence(auth, browserSessionPersistence);
+
 export const googleProvider = new GoogleAuthProvider();
+// Toto pomáha Safari pochopiť, ako spracovať návrat z prihlásenia
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
 export const db = getFirestore(app);
