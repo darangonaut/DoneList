@@ -3,21 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Done! - Test</title>
+    <title>Done!</title>
     <script>
-      // Tento alert sa spustí okamžite
-      alert("HTML SÚBOR NAČÍTANÝ - VERZIA 5");
+      window.onerror = function(m, u, l) { alert("S: " + m + " L:" + l); };
     </script>
     <style>
-      body { background-color: white; color: black; font-family: sans-serif; padding: 20px; }
+      body { background-color: #F2F2F7; margin: 0; font-family: sans-serif; }
+      #root { padding: 20px; text-align: center; }
     </style>
-    <script type="module" crossorigin src="/DoneList/assets/index-CJTlKXyp.js"></script>
-    <link rel="stylesheet" crossorigin href="/DoneList/assets/index-CYKdnS65.css">
+    <script type="module" crossorigin src="./assets/index-eU2ouRou.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-D9OmfOcI.css">
   </head>
   <body>
     <div id="root">
-      <h1 style="color: red;">AK VIDÍŠ TENTO TEXT, HTML JE NOVÉ</h1>
-      <p>Načítavam aplikáciu...</p>
+      <div style="margin-top: 50px;">
+        <p>Načítavam Done!...</p>
+      </div>
     </div>
+    <!-- RELATÍVNA CESTA PRE VITE BUILD -->
   </body>
 </html>
