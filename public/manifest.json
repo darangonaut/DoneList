@@ -1,0 +1,21 @@
+{
+  "short_name": "Done!",
+  "name": "Done! - Moje výhry",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#F2F2F7",
+  "background_color": "#F2F2F7"
+}

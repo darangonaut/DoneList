@@ -2,8 +2,7 @@ import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  browserPopupRedirectResolver, 
-  browserSessionPersistence,
+  indexedDBLocalPersistence,
   setPersistence
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -20,11 +19,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Nastavenie perzistencie a resolvera pre lepšiu podporu Safari
-setPersistence(auth, browserSessionPersistence);
+// IndexedDB je pre iPhone najstabilnejšia voľba
+setPersistence(auth, indexedDBLocalPersistence).catch(err => console.error(err));
 
 export const googleProvider = new GoogleAuthProvider();
-// Toto pomáha Safari pochopiť, ako spracovať návrat z prihlásenia
-googleProvider.setCustomParameters({ prompt: 'select_account' });
-
 export const db = getFirestore(app);

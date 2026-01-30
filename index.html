@@ -5,12 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Done!</title>
     <style>
-      body { background-color: #F2F2F7; margin: 0; }
-      @media (prefers-color-scheme: dark) { body { background-color: #000000; } }
+      body { background-color: #F2F2F7; margin: 0; font-family: sans-serif; }
+      #debug-error { 
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+        background: white; color: red; padding: 20px; z-index: 9999; overflow: auto;
+      }
     </style>
+    <script>
+      window.onerror = function(msg, url, line) {
+        var el = document.getElementById('debug-error');
+        if (el) {
+          el.style.display = 'block';
+          el.innerHTML += '<p>CHYBA: ' + msg + '<br>Linka: ' + line + '</p>';
+        }
+      };
+    </script>
   </head>
   <body>
+    <div id="debug-error"><h1>Aplikácia narazila na problém:</h1></div>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="./src/main.jsx"></script>
   </body>
 </html>
