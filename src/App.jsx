@@ -21,6 +21,16 @@ function App() {
   const [limitCount, setLimitCount] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [feedback, setFeedback] = useState('');
+
+  const motivations = [
+    'Skvelá práca! Len tak ďalej. 🚀',
+    'Ďalší zárez! Ide ti to karta. 🔥',
+    'Malá výhra, veľký posun. 👏',
+    'Si nezastaviteľný! Čo bude ďalej? 💪',
+    'Dobrá trefa! Každý krok sa počíta. ✨',
+    'Bum! A je to tam. 🎈'
+  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -78,6 +88,9 @@ function App() {
         category: 'default'
       });
       setInputText('');
+      const randomMsg = motivations[Math.floor(Math.random() * motivations.length)];
+      setFeedback(randomMsg);
+      setTimeout(() => setFeedback(''), 4000);
     } catch (error) {
       console.error("Error adding log:", error);
     }
@@ -122,6 +135,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-apple-bg pb-32 transition-colors duration-300">
+      {/* Motivational Toast */}
+      <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
+        feedback ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0 pointer-events-none'
+      }`}>
+        <div className="bg-apple-card border border-apple-border px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+          <span className="text-lg">✨</span>
+          <p className="text-[15px] font-semibold text-apple-text whitespace-nowrap">
+            {feedback}
+          </p>
+        </div>
+      </div>
+
       <header className="px-6 pt-12 pb-6 sticky top-0 bg-apple-bg/80 backdrop-blur-md z-10">
         <div className="max-w-xl mx-auto flex justify-between items-end">
           <div>
