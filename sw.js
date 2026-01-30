@@ -1,7 +1,7 @@
 const CACHE_NAME = 'donelog-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
+  '/DoneList/',
+  '/DoneList/index.html',
 ];
 
 self.addEventListener('install', event => {

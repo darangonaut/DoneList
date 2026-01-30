@@ -18,8 +18,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/DoneList/",
   "display": "standalone",
-  "theme_color": "#FDFCF0",
-  "background_color": "#FDFCF0"
+  "theme_color": "#F2F2F7",
+  "background_color": "#F2F2F7"
 }
