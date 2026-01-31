@@ -108,6 +108,14 @@ function App() {
   const [dailyStats, setDailyStats] = useState(() => JSON.parse(localStorage.getItem('cached_stats')) || {});
   const [accentColor, setAccentColor] = useState(() => localStorage.getItem('cached_accent') || '#F97316');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isInputExpanded, setIsInputExpanded] = useState(false);
+  const inputRef = useRef(null);
+
+  const triggerHaptic = (type = 'light') => {
+    if (!window.navigator.vibrate) return;
+    const patterns = { light: 10, medium: 20, success: [10, 30, 10] };
+    window.navigator.vibrate(patterns[type] || 10);
+  };
 
   useEffect(() => {
     getRedirectResult(auth).catch((e) => console.error("Redirect Error", e));
@@ -183,13 +191,16 @@ function App() {
   };
 
   const addLog = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!inputText.trim()) return;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    triggerHaptic('light');
     const now = new Date();
     const todayKey = now.toISOString().split('T')[0];
     const todayTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const updatedStats = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
     setDailyStats(updatedStats);
+    setIsInputExpanded(false);
     try {
       await addDoc(collection(db, 'logs'), { userId: user.uid, text: inputText, timestamp: serverTimestamp() });
       const sRef = doc(db, 'userStats', user.uid);
@@ -221,10 +232,14 @@ function App() {
   };
 
   const updateLog = async (id, newText) => {
-    try {
-      await updateDoc(doc(db, 'logs', id), { text: newText });
-    } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'logs', id), { text: newText }); } catch (e) { console.error(e); }
   };
+
+  useEffect(() => {
+    if (isInputExpanded && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInputExpanded]);
 
   if (loading && !user) return <div className="min-h-screen bg-apple-bg"></div>;
 
@@ -277,7 +292,7 @@ function App() {
     <div className="min-h-screen bg-apple-bg text-apple-text pb-32 transition-all duration-500 selection:bg-[var(--accent-color)] selection:text-white">
       <AnimatePresence>
         {feedback && (
-          <motion.div initial={{ y: -100, x: '-50%', opacity: 0 }} animate={{ y: 0, x: '-50%', opacity: 1 }} exit={{ y: -100, x: '-50%', opacity: 0 }} className="fixed top-8 left-1/2 z-50 pointer-events-none">
+          <motion.div initial={{ y: -100, x: '-50%', opacity: 0 }} animate={{ y: 0, x: '-50%', opacity: 1 }} exit={{ y: -100, x: '-50%', opacity: 0 }} className="fixed top-8 left-1/2 z-[110] pointer-events-none">
             <div className="bg-apple-card border border-apple-border px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 text-apple-text"><span>✨</span><p className="text-[15px] font-semibold whitespace-nowrap">{feedback}</p></div>
           </motion.div>
         )}
@@ -295,7 +310,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <header className="px-6 pt-12 pb-6 sticky top-0 bg-apple-bg/80 backdrop-blur-md z-10 border-b border-apple-border/50">
+      <header className="px-6 pt-12 pb-6 sticky top-0 bg-apple-bg/80 backdrop-blur-md z-30 border-b border-apple-border/50">
         <div className="max-w-xl mx-auto">
           <div className="flex justify-between items-end mb-8">
             <motion.div layout>
@@ -318,7 +333,7 @@ function App() {
       </header>
       <main className="max-w-xl mx-auto px-6 mt-6 overflow-x-hidden">
         <motion.div layout className="space-y-0">
-          <AnimatePresence initial={false}>
+          <AnimatePresence>
             {logs.map((log) => (
               <motion.div key={log.id} layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}>
                 <LogItem log={log} onDelete={() => deleteDoc(doc(db, 'logs', log.id))} onUpdate={updateLog} lang={lang} t={t} />
@@ -329,11 +344,50 @@ function App() {
         </motion.div>
         {hasMore && logs.length > 0 && <div className="flex justify-center mt-6"><button onClick={() => setLimitCount(prev => prev + 20)} className="text-sm font-semibold text-apple-secondary active:opacity-50">{t.loadMore}</button></div>}
       </main>
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-apple-bg via-apple-bg/95 to-transparent backdrop-blur-sm z-50">
-        <form onSubmit={addLog} className="max-w-xl mx-auto flex items-center bg-apple-card rounded-2xl shadow-2xl border border-apple-border p-1">
-          <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={t.placeholder} className="flex-1 bg-transparent border-none px-5 py-4 focus:ring-0 outline-none text-[17px] text-apple-text placeholder:text-apple-secondary" />
-          <button type="submit" style={{ backgroundColor: accentColor }} className="text-white h-11 w-11 rounded-xl shadow-sm flex items-center justify-center mr-1 hover:opacity-90 active:scale-90 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg></button>
-        </form>
+
+      <div className="fixed inset-0 flex items-center justify-center z-[120] pointer-events-none">
+        <AnimatePresence>
+          {!isInputExpanded ? (
+            <motion.button
+              key="fab"
+              layoutId="fab-container"
+              onClick={() => { triggerHaptic('light'); setIsInputExpanded(true); }}
+              style={{ backgroundColor: accentColor, bottom: '2.5rem', position: 'fixed', borderRadius: '100px' }}
+              className="w-16 h-16 shadow-[0_15px_30px_rgba(0,0,0,0.2)] flex items-center justify-center text-white text-4xl pointer-events-auto"
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            >
+              +
+            </motion.button>
+          ) : (
+            <motion.div
+              key="expanded"
+              layoutId="fab-container"
+              className="fixed inset-0 bg-apple-bg flex flex-col items-center justify-center p-8 pointer-events-auto"
+              style={{ borderRadius: '0px' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            >
+              <div className="w-full max-w-lg relative">
+                <button onClick={() => setIsInputExpanded(false)} className="absolute -top-32 right-0 text-apple-secondary font-bold text-lg p-4 active:opacity-50">{t.back}</button>
+                <form onSubmit={addLog} className="w-full space-y-8">
+                  <textarea
+                    ref={inputRef}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder={t.placeholder}
+                    className="w-full bg-transparent border-none text-3xl md:text-4xl font-bold text-apple-text placeholder:text-apple-secondary/30 focus:ring-0 outline-none resize-none min-h-[200px]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addLog(); }
+                      if (e.key === 'Escape') setIsInputExpanded(false);
+                    }}
+                  />
+                  <button type="submit" style={{ backgroundColor: accentColor }} className="w-full py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl active:scale-95 transition-all">
+                    {lang === 'sk' ? 'Uložiť víťazstvo' : 'Save Victory'}
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
