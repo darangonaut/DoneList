@@ -11,6 +11,11 @@ export const translations = {
     featureStreaks: "Buduj konzistenciu",
     featureStats: "Sleduj svoj progres",
     verifying: "Overujem prihlásenie...",
+    settings: "Nastavenia",
+    account: "Účet",
+    appearance: "Vzhľad",
+    language: "Jazyk",
+    back: "Hotovo",
     motivations: [
       "Skvelá práca! ✨",
       "Len tak ďalej! 🚀",
@@ -33,6 +38,11 @@ export const translations = {
     featureStreaks: "Build consistency",
     featureStats: "Track your progress",
     verifying: "Verifying login...",
+    settings: "Settings",
+    account: "Account",
+    appearance: "Appearance",
+    language: "Language",
+    back: "Done",
     motivations: [
       "Great job! ✨",
       "Keep it up! 🚀",
