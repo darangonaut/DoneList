@@ -1,38 +1,46 @@
 export const translations = {
   sk: {
-    title: "Done!",
+    title: "DoneList",
     subtitle: "Zapisuj si svoje víťazstvá každý deň.",
     login: "Prihlásiť sa cez Google",
-    logout: "Odhlásiť",
-    placeholder: "Zapíš si malú (aj veľkú) výhru...",
-    noLogs: "Zatiaľ žiadne záznamy.",
-    loadMore: "Načítať staršie",
-    loading: "Načítavam...",
+    placeholder: "Čo sa ti dnes podarilo?",
+    noLogs: "Zatiaľ žiadne víťazstvá. Začni hneď!",
+    logout: "Odhlásiť sa",
+    loadMore: "Načítať viac",
+    tagline: "Minimalistické zaznamenávanie",
+    featureStreaks: "Buduj konzistenciu",
+    featureStats: "Sleduj svoj progres",
+    verifying: "Overujem prihlásenie...",
     motivations: [
-      'Skvelá práca! Len tak ďalej. 🚀',
-      'Ďalší zárez! Ide ti to karta. 🔥',
-      'Malá výhra, veľký posun. 👏',
-      'Si nezastaviteľný! Čo bude ďalej? 💪',
-      'Dobrá trefa! Každý krok sa počíta. ✨',
-      'Bum! A je to tam. 🎈'
+      "Skvelá práca! ✨",
+      "Len tak ďalej! 🚀",
+      "Si nezastaviteľný! 🔥",
+      "To je ono! 👏",
+      "Výborne! 🌟",
+      "Krok za krokom k cieľu! 👣",
+      "Tvoj progres je vidieť! 📈"
     ]
   },
   en: {
-    title: "Done!",
-    subtitle: "Record your victories every day.",
+    title: "DoneList",
+    subtitle: "Log your daily victories every day.",
     login: "Sign in with Google",
-    logout: "Sign out",
-    placeholder: "Record a small (or big) win...",
-    noLogs: "No entries yet.",
+    placeholder: "What did you achieve today?",
+    noLogs: "No victories yet. Start now!",
+    logout: "Logout",
     loadMore: "Load more",
-    loading: "Loading...",
+    tagline: "Minimalist Journaling",
+    featureStreaks: "Build consistency",
+    featureStats: "Track your progress",
+    verifying: "Verifying login...",
     motivations: [
-      'Great job! Keep it up. 🚀',
-      'Another win! You\'re on a roll. 🔥',
-      'Small win, big progress. 👏',
-      'You\'re unstoppable! What\'s next? 💪',
-      'Nice one! Every step counts. ✨',
-      'Boom! There it is. 🎈'
+      "Great job! ✨",
+      "Keep it up! 🚀",
+      "You're on fire! 🔥",
+      "That's it! 👏",
+      "Excellent! 🌟",
+      "Step by step to the goal! 👣",
+      "Your progress is visible! 📈"
     ]
   }
 };
