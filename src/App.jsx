@@ -23,39 +23,29 @@ import { translations } from './translations';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
-function LogItem({ log, onDelete, lang }) {
+const ACCENT_COLORS = [
+  { id: 'orange', value: '#F97316' },
+  { id: 'blue', value: '#007AFF' },
+  { id: 'purple', value: '#AF52DE' },
+  { id: 'green', value: '#34C759' },
+  { id: 'pink', value: '#FF2D55' },
+  { id: 'indigo', value: '#5856D6' }
+];
+
+function LogItem({ log, onDelete }) {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-70, -20], [1, 0]);
   const scale = useTransform(x, [-70, -20], [1, 0.5]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl mb-3">
-      <motion.div 
-        style={{ opacity, scale }}
-        className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center"
-      >
-        <button 
-          onClick={() => onDelete(log.id)}
-          className="w-full h-full flex items-center justify-center text-white text-2xl font-bold"
-        >
-          −
-        </button>
+      <motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center">
+        <button onClick={() => onDelete(log.id)} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">−</button>
       </motion.div>
-
-      <motion.div
-        drag="x"
-        dragConstraints={{ left: -80, right: 0 }}
-        dragElastic={0.1}
-        style={{ x }}
-        className="bg-apple-card p-4 border border-apple-border flex justify-between items-center relative z-10 rounded-2xl shadow-sm touch-pan-y"
-      >
-        <div className="flex flex-col pr-4 select-none">
+      <motion.div drag="x" dragConstraints={{ left: -80, right: 0 }} dragElastic={0.1} style={{ x }} className="bg-apple-card p-4 border border-apple-border flex justify-between items-center relative z-10 rounded-2xl shadow-sm touch-pan-y">
+        <div className="flex flex-col pr-4 select-none text-apple-text">
           <p className="text-[17px] leading-tight font-normal">{log.text}</p>
-          {log.timestamp && (
-            <span className="text-[13px] text-apple-secondary mt-1">
-              {new Date(log.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
+          {log.timestamp && <span className="text-[13px] text-apple-secondary mt-1">{new Date(log.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
         </div>
       </motion.div>
     </div>
@@ -71,30 +61,31 @@ function App() {
   const [hasMore, setHasMore] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [lang, setLang] = useState('sk');
-  const [streak, setStreak] = useState(0);
-  const [dailyStats, setDailyStats] = useState({});
+  const [streak, setStreak] = useState(() => Number(localStorage.getItem('cached_streak')) || 0);
+  const [dailyStats, setDailyStats] = useState(() => JSON.parse(localStorage.getItem('cached_stats')) || {});
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('cached_accent') || '#F97316');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const triggerHaptic = (type = 'light') => {
-    if (!window.navigator.vibrate) return;
-    if (type === 'light') window.navigator.vibrate(10);
-    else if (type === 'medium') window.navigator.vibrate(20);
-    else if (type === 'success') window.navigator.vibrate([10, 30, 10]);
-  };
-
   useEffect(() => {
-    try {
-      const savedLang = localStorage.getItem('lang');
-      if (savedLang) setLang(savedLang);
-    } catch (e) {}
+    const savedLang = localStorage.getItem('lang');
+    if (savedLang) setLang(savedLang);
     getRedirectResult(auth).catch((e) => console.error("Redirect Error", e));
   }, []);
 
   const t = translations[lang] || translations.sk;
 
   useEffect(() => {
-    try { localStorage.setItem('lang', lang); } catch (e) {}
+    localStorage.setItem('lang', lang);
   }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem('cached_accent', accentColor);
+    document.documentElement.style.setProperty('--accent-color', accentColor);
+    
+    // Dynamická zmena meta tagov pre farbu status baru v Safari
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', accentColor);
+  }, [accentColor]);
 
   useEffect(() => {
     let unsubStreak = () => {};
@@ -106,14 +97,13 @@ function App() {
             const data = s.data();
             setStreak(data.streak || 0);
             setDailyStats(data.dailyCounts || {});
+            localStorage.setItem('cached_streak', data.streak || 0);
+            localStorage.setItem('cached_stats', JSON.stringify(data.dailyCounts || {}));
           }
         });
       } else {
-        setStreak(0);
-        setDailyStats({});
-        unsubStreak();
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => { unsubAuth(); unsubStreak(); };
   }, []);
@@ -121,93 +111,89 @@ function App() {
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, 'logs'), where('userId', '==', user.uid), limit(limitCount));
-    return onSnapshot(q, (sn) => {
+    const unsub = onSnapshot(q, (sn) => {
       const d = sn.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
       setLogs(d);
       setHasMore(sn.docs.length === limitCount);
+      setLoading(false);
     });
+    return unsub;
   }, [user, limitCount]);
 
-  const chartData = useMemo(() => {
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const key = date.toISOString().split('T')[0];
-      data.push({
-        label: date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { weekday: 'narrow' }),
-        count: dailyStats[key] || 0,
-        isToday: i === 0
-      });
+  const heatmapData = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 139; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      days.push({ key, count: dailyStats[key] || 0 });
     }
-    return data;
-  }, [dailyStats, lang]);
+    return days;
+  }, [dailyStats]);
 
-  const handleLogin = async () => {
-    try {
-      setLoading(true);
-      await signInWithRedirect(auth, googleProvider);
-    } catch (e) {
-      setLoading(false);
-      alert("Chyba: " + e.message);
-    }
+  const handleLogin = () => {
+    setLoading(true);
+    signInWithRedirect(auth, googleProvider);
   };
 
   const handleLogout = () => {
     setIsSettingsOpen(false);
     signOut(auth);
+    localStorage.removeItem('cached_streak');
+    localStorage.removeItem('cached_stats');
   };
 
   const addLog = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    triggerHaptic('light');
     const now = new Date();
     const todayKey = now.toISOString().split('T')[0];
+    const todayTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const updatedStats = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
+    setDailyStats(updatedStats);
+
     try {
-      await addDoc(collection(db, 'logs'), {
-        userId: user.uid,
-        text: inputText,
-        timestamp: serverTimestamp(),
-        category: 'default'
-      });
+      await addDoc(collection(db, 'logs'), { userId: user.uid, text: inputText, timestamp: serverTimestamp() });
       const sRef = doc(db, 'userStats', user.uid);
       const sSnap = await getDoc(sRef);
-      const todayTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      let needsStatsUpdate = true;
       let newStreak = 1;
-      let newCounts = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
       if (sSnap.exists()) {
         const data = sSnap.data();
         const lastDate = data.lastDate?.toDate();
         if (lastDate) {
           const lastDayTimestamp = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()).getTime();
-          if (lastDayTimestamp === todayTimestamp) newStreak = data.streak || 1;
-          else if (lastDayTimestamp === todayTimestamp - 86400000) newStreak = (data.streak || 0) + 1;
+          if (lastDayTimestamp === todayTimestamp) {
+            needsStatsUpdate = false;
+            newStreak = data.streak;
+          } else if (lastDayTimestamp === todayTimestamp - 86400000) {
+            newStreak = (data.streak || 0) + 1;
+          }
         }
       }
-      await setDoc(sRef, { streak: newStreak, lastDate: serverTimestamp(), dailyCounts: newCounts }, { merge: true });
-      if ([7, 30, 100, 365].includes(newStreak) && (!sSnap.exists() || sSnap.data().streak !== newStreak)) {
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        setFeedback(`WAAAU! ${newStreak} dňová séria! 🏆`);
+      if (needsStatsUpdate) {
+        await setDoc(sRef, { streak: newStreak, lastDate: serverTimestamp(), dailyCounts: updatedStats }, { merge: true });
+        if ([7, 30, 100].includes(newStreak)) {
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+          setFeedback(`WAAAU! ${newStreak} dňová séria! 🏆`);
+        } else {
+          setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]);
+        }
       } else {
+        await setDoc(sRef, { dailyCounts: updatedStats }, { merge: true });
         setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]);
       }
       setInputText('');
-      triggerHaptic('success');
       setTimeout(() => setFeedback(''), 4000);
     } catch (e) { console.error(e); }
   };
 
-  const deleteLog = async (id) => {
-    triggerHaptic('medium');
-    try { await deleteDoc(doc(db, 'logs', id)); } catch (e) { console.error(e); }
-  };
-
-  if (loading) return <div className="min-h-screen bg-apple-bg"></div>;
+  if (loading && !user) return <div className="min-h-screen bg-apple-bg"></div>;
 
   if (!user) return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col items-center justify-center px-6 selection:bg-orange-500/30">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col items-center justify-center px-6 selection:bg-[var(--accent-color)]/30">
       <div className="absolute inset-0 z-0 opacity-40">
         <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], x: [-100, 100, -100], y: [-50, 50, -50] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full bg-orange-600 blur-[120px]" />
         <motion.div animate={{ scale: [1.2, 1, 1.2], rotate: [0, -120, 0], x: [100, -100, 100], y: [50, -50, 50] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] rounded-full bg-blue-600 blur-[120px]" />
@@ -238,7 +224,7 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-apple-bg text-apple-text pb-32 transition-colors duration-300">
+    <div className="min-h-screen bg-apple-bg text-apple-text pb-32 transition-all duration-500 selection:bg-[var(--accent-color)] selection:text-white">
       <AnimatePresence>
         {feedback && (
           <motion.div initial={{ y: -100, x: '-50%', opacity: 0 }} animate={{ y: 0, x: '-50%', opacity: 1 }} exit={{ y: -100, x: '-50%', opacity: 0 }} className="fixed top-8 left-1/2 z-50 pointer-events-none">
@@ -249,52 +235,14 @@ function App() {
         )}
 
         {isSettingsOpen && (
-          <motion.div 
-            initial={{ y: '100%' }} 
-            animate={{ y: 0 }} 
-            exit={{ y: '100%' }} 
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 bg-apple-bg z-[100] px-6 pt-12"
-          >
+          <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-0 bg-apple-bg z-[100] px-6 pt-12 overflow-y-auto pb-20">
             <div className="max-w-xl mx-auto">
-              <div className="flex justify-between items-center mb-10">
-                <h2 className="text-3xl font-bold tracking-tight">{t.settings}</h2>
-                <button onClick={() => setIsSettingsOpen(false)} className="text-blue-500 font-semibold text-[17px]">{t.back}</button>
-              </div>
-
+              <div className="flex justify-between items-center mb-10"><h2 className="text-3xl font-bold tracking-tight">{t.settings}</h2><button onClick={() => setIsSettingsOpen(false)} className="text-blue-500 font-semibold text-[17px]">{t.back}</button></div>
               <div className="space-y-8">
-                {/* Account Section */}
-                <div>
-                  <p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{t.account}</p>
-                  <div className="bg-apple-card rounded-2xl border border-apple-border overflow-hidden">
-                    <div className="p-4 flex items-center gap-4">
-                      {user.photoURL && <img src={user.photoURL} className="w-12 h-12 rounded-full" alt="Avatar" />}
-                      <div>
-                        <p className="font-bold text-[17px]">{user.displayName}</p>
-                        <p className="text-apple-secondary text-[14px]">{user.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Language Section */}
-                <div>
-                  <p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{t.language}</p>
-                  <div className="bg-apple-card rounded-2xl border border-apple-border overflow-hidden">
-                    <button onClick={() => setLang('sk')} className="w-full p-4 flex justify-between items-center border-b border-apple-border active:bg-apple-border/10">
-                      <span className="text-[17px]">Slovenčina</span>
-                      {lang === 'sk' && <span className="text-blue-500">✓</span>}
-                    </button>
-                    <button onClick={() => setLang('en')} className="w-full p-4 flex justify-between items-center active:bg-apple-border/10">
-                      <span className="text-[17px]">English</span>
-                      {lang === 'en' && <span className="text-blue-500">✓</span>}
-                    </button>
-                  </div>
-                </div>
-
-                <button onClick={handleLogout} className="w-full bg-apple-card rounded-2xl border border-apple-border p-4 text-red-500 font-bold text-[17px] active:bg-red-500/10">
-                  {t.logout}
-                </button>
+                <div><p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{t.account}</p><div className="bg-apple-card rounded-2xl border border-apple-border overflow-hidden"><div className="p-4 flex items-center gap-4">{user.photoURL && <img src={user.photoURL} className="w-12 h-12 rounded-full" alt="Avatar" />}<div><p className="font-bold text-[17px]">{user.displayName}</p><p className="text-apple-secondary text-[14px]">{user.email}</p></div></div></div></div>
+                <div><p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{t.accentColor}</p><div className="bg-apple-card rounded-2xl border border-apple-border p-5"><div className="grid grid-cols-6 gap-2">{ACCENT_COLORS.map(color => (<button key={color.id} onClick={() => setAccentColor(color.value)} className={`aspect-square rounded-full border-2 transition-all ${accentColor === color.value ? 'border-apple-text scale-110' : 'border-transparent'}`} style={{ backgroundColor: color.value }} />))}</div></div></div>
+                <div><p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{t.language}</p><div className="bg-apple-card rounded-2xl border border-apple-border overflow-hidden"><button onClick={() => setLang('sk')} className="w-full p-4 flex justify-between items-center border-b border-apple-border active:bg-apple-border/10"><span className="text-[17px]">Slovenčina</span>{lang === 'sk' && <span className="text-blue-500">✓</span>}</button><button onClick={() => setLang('en')} className="w-full p-4 flex justify-between items-center active:bg-apple-border/10"><span className="text-[17px]">English</span>{lang === 'en' && <span className="text-blue-500">✓</span>}</button></div></div>
+                <button onClick={handleLogout} className="w-full bg-apple-card rounded-2xl border border-apple-border p-4 text-red-500 font-bold text-[17px] active:bg-red-500/10">{t.logout}</button>
               </div>
             </div>
           </motion.div>
@@ -303,30 +251,21 @@ function App() {
 
       <header className="px-6 pt-12 pb-6 sticky top-0 bg-apple-bg/80 backdrop-blur-md z-10 border-b border-apple-border/50">
         <div className="max-w-xl mx-auto">
-          <div className="flex justify-between items-end mb-6">
+          <div className="flex justify-between items-end mb-8">
             <motion.div layout>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xs font-semibold text-apple-secondary uppercase tracking-widest">{new Date().toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long' })}</p>
-                <AnimatePresence mode="wait">{streak > 0 && <motion.span key={streak} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1 text-sm font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">🔥 {streak}</motion.span>}</AnimatePresence>
+                <AnimatePresence mode="wait">{streak > 0 && (<motion.span key={streak} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1 text-sm font-bold bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-0.5 rounded-full border border-[var(--accent-color)]/20 shadow-sm">🔥 {streak}</motion.span>)}</AnimatePresence>
               </div>
               <h1 className="text-4xl font-bold tracking-tight">{t.title}</h1>
             </motion.div>
-            <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">
-              {user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}
-            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">{user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}</button>
           </div>
-          <div className="flex items-end justify-between h-12 gap-1 px-2">
-            {chartData.map((day, i) => {
-              const maxCount = Math.max(...chartData.map(d => d.count), 1);
-              const height = (day.count / maxCount) * 100;
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full bg-apple-border/30 rounded-t-sm relative h-8 overflow-hidden">
-                    <motion.div initial={{ height: 0 }} animate={{ height: `${height}%` }} className={`absolute bottom-0 left-0 right-0 ${day.isToday ? 'bg-apple-text' : 'bg-apple-secondary/40'} rounded-t-sm`} />
-                  </div>
-                  <span className={`text-[9px] font-bold ${day.isToday ? 'text-apple-text' : 'text-apple-secondary'}`}>{day.label}</span>
-                </div>
-              );
+          <div className="flex flex-wrap gap-[4px] justify-center overflow-x-auto pb-4 px-2">
+            {heatmapData.map((day) => {
+              const intensity = Math.min(day.count, 4);
+              const opacity = intensity === 0 ? 0.1 : 0.25 + (intensity * 0.18);
+              return <div key={day.key} className="w-[11px] h-[11px] rounded-[2.5px] shrink-0 transition-colors duration-500" style={{ backgroundColor: intensity > 0 ? 'var(--accent-color)' : 'currentColor', opacity }} />;
             })}
           </div>
         </div>
@@ -337,11 +276,11 @@ function App() {
           <AnimatePresence initial={false}>
             {logs.map((log) => (
               <motion.div key={log.id} layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}>
-                <LogItem log={log} onDelete={deleteLog} lang={lang} />
+                <LogItem log={log} onDelete={() => deleteDoc(doc(db, 'logs', log.id))} />
               </motion.div>
             ))}
           </AnimatePresence>
-          {logs.length === 0 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium">{t.noLogs}</motion.div>}
+          {logs.length === 0 && !loading && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium">{t.noLogs}</motion.div>}
         </motion.div>
         {hasMore && logs.length > 0 && <div className="flex justify-center mt-6"><button onClick={() => setLimitCount(prev => prev + 20)} className="text-sm font-semibold text-apple-secondary active:opacity-50">{t.loadMore}</button></div>}
       </main>
@@ -349,7 +288,7 @@ function App() {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-apple-bg via-apple-bg/95 to-transparent backdrop-blur-sm z-50">
         <form onSubmit={addLog} className="max-w-xl mx-auto flex items-center bg-apple-card rounded-2xl shadow-2xl border border-apple-border p-1">
           <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={t.placeholder} className="flex-1 bg-transparent border-none px-5 py-4 focus:ring-0 outline-none text-[17px] text-apple-text placeholder:text-apple-secondary" />
-          <button type="submit" className="bg-apple-text text-apple-bg h-11 w-11 rounded-xl shadow-sm flex items-center justify-center mr-1 hover:opacity-90 active:scale-90 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg></button>
+          <button type="submit" style={{ backgroundColor: accentColor }} className="text-white h-11 w-11 rounded-xl shadow-sm flex items-center justify-center mr-1 hover:opacity-90 active:scale-90 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg></button>
         </form>
       </div>
     </div>

@@ -14,6 +14,7 @@ export const translations = {
     settings: "Nastavenia",
     account: "Účet",
     appearance: "Vzhľad",
+    accentColor: "Farba témy",
     language: "Jazyk",
     back: "Hotovo",
     motivations: [
@@ -41,6 +42,7 @@ export const translations = {
     settings: "Settings",
     account: "Account",
     appearance: "Appearance",
+    accentColor: "Accent Color",
     language: "Language",
     back: "Done",
     motivations: [

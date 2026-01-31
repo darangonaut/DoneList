@@ -1,54 +1,54 @@
-# Done! 🚀
+# DoneList 🚀
 
-**Done!** je minimalistická progresívna webová aplikácia (PWA) navrhnutá v prísnom Apple štýle. Slúži na bleskové zaznamenávanie každodenných víťazstiev, čím buduje tvoju pozitívnu rutinu a disciplínu.
+**DoneList** is a minimalist Progressive Web App (PWA) crafted with a strict Apple-inspired aesthetic. It's designed for lightning-fast logging of daily victories, helping you build positive routines and lasting discipline.
 
-👉 **Vyskúšaj aplikáciu tu:** [https://donelist-8b4e7.firebaseapp.com](https://donelist-8b4e7.firebaseapp.com)
+👉 **Live Demo:** [https://donelist-8b4e7.firebaseapp.com](https://donelist-8b4e7.firebaseapp.com)
 
-![Done! App Concept](https://img.shields.io/badge/UI-Apple%20Style-F2F2F7?style=for-the-badge&logo=apple)
+![UI Style](https://img.shields.io/badge/UI-Apple%20Style-F2F2F7?style=for-the-badge&logo=apple)
 ![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=white)
 ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![Framer Motion](https://img.shields.io/badge/Animations-Framer%20Motion-FF0055?style=for-the-badge&logo=framer)
 
-## ✨ Kľúčové funkcie
+## ✨ Key Features
 
-- **iOS Swipe-to-Delete:** Natívny pocit pri mazaní položiek potiahnutím doľava, presne ako v systéme iOS.
-- **Weekly Activity Chart:** Diskrétny graf v hlavičke, ktorý vizualizuje tvoju aktivitu za posledných 7 dní.
-- **Streaks 🔥 & Milestones:** Sledovanie dennej série s veľkolepými konfety oslavami pri dosiahnutí míľnikov (7, 30, 100 dní).
-- **Haptic Feedback:** Jemné vibračné odozvy pri interakciách pre pocit fyzického zariadenia.
-- **Google Auth (PWA Optimized):** Bezproblémové prihlásenie cez Google, špeciálne upravené pre režim "na ploche" na iPhone.
-- **Apple Design:** Glassmorphism, systémové fonty (San Francisco), čisté línie a plná podpora **Dark Mode**.
-- **PWA Performance:** Extrémne rýchle načítanie a možnosť inštalácie ako natívna aplikácia.
+- **Activity Heatmap:** A GitHub-style year-long visualization of your consistency, glowing with your chosen accent color.
+- **Dynamic Themes:** Choose from Apple-inspired accent colors (Orange, Blue, Purple, Green, Pink, Indigo) that tint the entire UI, including backgrounds and status bars.
+- **iOS Swipe-to-Delete:** Native feel when removing items—swipe left to reveal a delete action, just like on iOS.
+- **Streaks 🔥 & Milestones:** Track your daily consistency with celebratory confetti bursts at key milestones (7, 30, 100 days).
+- **Haptic Feedback:** Subtle vibrations on interaction for a physical, tactile device feel.
+- **PWA Optimized:** Specially tuned for iPhone "Add to Home Screen" mode, including a dedicated login flow.
+- **True Dark Mode:** Automatically switches between a clean light look and a deep, color-tinted dark interface.
 
 ## 🛠 Tech Stack
 
-- **Frontend:** [React](https://reactjs.org/) + [Framer Motion](https://www.framer.com/motion/) (pre prémiové animácie)
+- **Frontend:** [React](https://reactjs.org/) + [Framer Motion](https://www.framer.com/motion/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **Backend:** [Firebase](https://firebase.google.com/) (Auth, Firestore, Hosting)
-- **Ostatné:** [Canvas Confetti](https://www.npmjs.com/package/canvas-confetti) pre oslavy
+- **Visuals:** [Canvas Confetti](https://www.npmjs.com/package/canvas-confetti) for celebrations
 
-## 🚀 Rýchly štart (Local Dev)
+## 🚀 Quick Start (Local Dev)
 
-1. **Klonovanie repozitára:**
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/darangonaut/DoneList.git
    cd DoneList
    ```
 
-2. **Inštalácia závislostí:**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Spustenie vývojového servera:**
+3. **Run development server:**
    ```bash
    npm run dev
    ```
 
-## 📋 Plánované funkcie (Roadmap)
+## 📋 Roadmap
 
-- [ ] Kategorizácia úspechov (Práca, Zdravie, Osobný rast).
-- [ ] Export denného prehľadu ako štýlový obrázok pre sociálne siete.
-- [ ] Interaktívne widgety na plochu (ak to platforma dovolí).
+- [ ] Smart Categories (#work, #health, #personal) with color tagging.
+- [ ] Shareable "Victory Cards" optimized for Instagram Stories.
+- [ ] Voice-to-text logging (Siri-style input).
 
 ---
-Vytvorené s cieľom oslavovať každý progres. *Done is better than perfect.*
+Created to celebrate every step of progress. *Done is better than perfect.*
