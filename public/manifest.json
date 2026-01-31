@@ -1,21 +1,21 @@
 {
-  "short_name": "Done!",
-  "name": "Done! - Moje výhry",
+  "short_name": "DoneList",
+  "name": "DoneList - Daily Victories",
   "icons": [
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo512.png",
+      "src": "icon.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": "./",
-  "scope": "./",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#F2F2F7",
-  "background_color": "#F2F2F7"
+  "theme_color": "#000000",
+  "background_color": "#000000"
 }
