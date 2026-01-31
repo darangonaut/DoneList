@@ -21,7 +21,9 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 ## ✨ Key Features
 
 - **Activity Heatmap:** A GitHub-style year-long visualization of your consistency, glowing with your chosen accent color.
-- **Dynamic Themes:** Choose from Apple-inspired accent colors (Orange, Blue, Purple, Green, Pink, Indigo) that tint the entire UI, including backgrounds and status bars.
+- **Inline Editing:** Tap any victory to edit it instantly—native feel with smooth transitions.
+- **Smart History:** Timestamps automatically adapt—today shows time, yesterday is labeled, and older entries show full dates.
+- **Dynamic Themes:** Choose from Apple-inspired accent colors that tint the entire UI, including backgrounds and status bars.
 - **iOS Swipe-to-Delete:** Native feel when removing items—swipe left to reveal a delete action, just like on iOS.
 - **Streaks 🔥 & Milestones:** Track your daily consistency with celebratory confetti bursts at key milestones (7, 30, 100 days).
 - **Haptic Feedback:** Subtle vibrations on interaction for a physical, tactile device feel.
