@@ -1,6 +1,6 @@
 # DoneList 🚀
 
-**DoneList** is a minimalist Progressive Web App (PWA) crafted with a strict Apple-inspired aesthetic. It's designed for lightning-fast logging of daily victories, helping you build positive routines and lasting discipline.
+**DoneList** is a minimalist Progressive Web App (PWA) crafted with a strict Apple-inspired aesthetic. It's not just a log—it's a psychological tool designed to help you overcome "achievement amnesia" and build lasting discipline through the celebration of daily victories.
 
 👉 **Live Demo:** [https://donelist-8b4e7.firebaseapp.com](https://donelist-8b4e7.firebaseapp.com)
 
@@ -8,6 +8,15 @@
 ![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=white)
 ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![Framer Motion](https://img.shields.io/badge/Animations-Framer%20Motion-FF0055?style=for-the-badge&logo=framer)
+
+## 🧠 Why DoneList?
+
+Most of us suffer from **achievement amnesia**. At the end of the day, we remember exactly which three emails we didn't answer, but we completely ignore the ten things we actually solved. DoneList "hacks" your psychology:
+
+- **Fight Negative Bias:** Our brains are wired to notice threats and unfinished tasks. DoneList acts as a counterbalance, forcing you to acknowledge real progress.
+- **Dopamine on Demand:** Unlike To-Do lists where the feeling disappears when you delete a task, DoneList builds an archive of victories you can return to anytime.
+- **Objective Productivity:** Change the feeling of "I did nothing today" into clear facts. See exactly where your energy is really going.
+- **Fuel for Hard Days:** Your archive is proof that you are capable of getting things done, even when you don't feel like it.
 
 ## ✨ Key Features
 
@@ -17,7 +26,6 @@
 - **Streaks 🔥 & Milestones:** Track your daily consistency with celebratory confetti bursts at key milestones (7, 30, 100 days).
 - **Haptic Feedback:** Subtle vibrations on interaction for a physical, tactile device feel.
 - **PWA Optimized:** Specially tuned for iPhone "Add to Home Screen" mode, including a dedicated login flow.
-- **True Dark Mode:** Automatically switches between a clean light look and a deep, color-tinted dark interface.
 
 ## 🛠 Tech Stack
 
