@@ -20,6 +20,8 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 
 ## ✨ Key Features
 
+- **🔮 AI Mentor:** Your personal stoic coach powered by Google Gemini. It analyzes your logs in your language to provide tailored motivation and insights.
+- **📅 Calendar & Today View:** Switch between a focused "Today" list and a comprehensive "Calendar" archive to visualize your consistency over time.
 - **Hierarchical Reflections:** Daily, weekly, and monthly rituals to crown your best moments—from **🌟 Daily Stars** to **💎 Weekly Jewels** and **🏆 Monthly Trophies**.
 - **Victory Cards 📸:** Generate beautiful, minimalist images of your top wins with one click, ready to be shared on Instagram Stories or saved to your gallery.
 - **Smart Tags & Focus Mode:** Categorize your wins with `#tags`. Tap any tag to filter your entire history and see category-specific progress in the heatmap.
@@ -32,6 +34,7 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 ## 🛠 Tech Stack
 
 - **Frontend:** [React](https://reactjs.org/) + [Framer Motion](https://www.framer.com/motion/)
+- **AI Intelligence:** [Google Gemini API](https://ai.google.dev/) (Gemini 2.5 Flash)
 - **Image Generation:** [html-to-image](https://www.npmjs.com/package/html-to-image)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **Backend:** [Firebase](https://firebase.google.com/) (Auth, Firestore with Security Rules, Hosting)
@@ -50,7 +53,14 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
    npm install
    ```
 
-3. **Run development server:**
+3. **Set up AI (Optional):**
+   Get your API key from [Google AI Studio](https://aistudio.google.com/).
+   Create a `.env.local` file in the root directory:
+   ```bash
+   echo "VITE_GEMINI_API_KEY=your_api_key_here" > .env.local
+   ```
+
+4. **Run development server:**
    ```bash
    npm run dev
    ```
@@ -60,9 +70,11 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 - [x] Smart Categories (#work, #health, #personal) with color tagging.
 - [x] Shareable "Victory Cards" optimized for Instagram Stories.
 - [x] Hierarchical reflections (Day/Week/Month).
+- [x] AI Mentor (Analyze progress and provide motivation).
+- [x] Calendar View for browsing history.
 - [ ] Voice-to-text logging (Siri-style input).
-- [ ] AI Weekly Summary (using LLM to analyze your progress and mood).
 - [ ] Push Notifications for evening reminders.
+- [ ] Fulltext search.
 
 ---
 Created to celebrate every step of progress. *Done is better than perfect.*

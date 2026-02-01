@@ -84,7 +84,8 @@ export function LandingPage({ t, lang, setLang, handleLogin }) {
               { icon: '🧠', title: t.promo1Title, desc: t.promo1Desc },
               { icon: '⚡️', title: t.promo2Title, desc: t.promo2Desc },
               { icon: '📈', title: t.promo3Title, desc: t.promo3Desc },
-              { icon: '⛽️', title: t.promo4Title, desc: t.promo4Desc }
+              { icon: '⛽️', title: t.promo4Title, desc: t.promo4Desc },
+              { icon: '🔮', title: t.promo5Title, desc: t.promo5Desc }
             ].map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-black/[0.03] dark:bg-white/5 border border-black/[0.05] dark:border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col md:flex-row gap-6 items-start transition-colors text-left">
                 <span className="text-4xl shrink-0">{item.icon}</span>
@@ -99,8 +100,8 @@ export function LandingPage({ t, lang, setLang, handleLogin }) {
 
         <section className="py-16 border-t border-black/5 dark:border-white/10 w-full text-center">
           <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="text-2xl font-bold mb-10">{t.appTitle}</motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mb-12">
-            {[t.appItem1, t.appItem2, t.appItem3].map((item, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-12">
+            {[t.appItem1, t.appItem2, t.appItem3, t.appItem4].map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-black/[0.03] dark:bg-white/5 p-5 rounded-2xl border border-black/[0.05] dark:border-white/10 text-center"><p className="font-bold text-[15px]">⚡️ {item}</p></motion.div>
             ))}
           </div>
