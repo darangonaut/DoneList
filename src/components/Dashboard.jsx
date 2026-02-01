@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogItem } from './LogItem';
+import { CalendarView } from './CalendarView';
 
 const MAX_LENGTH = 280;
 
@@ -13,6 +14,9 @@ export function Dashboard({
   accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
   showStreak, showHeatmap, dailyGoal
 }) {
+  const [view, setView] = useState('list'); // 'list' | 'calendar'
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState(null);
+
   const remainingChars = MAX_LENGTH - inputText.length;
   const isCloseToLimit = remainingChars <= 20;
   const isOverLimit = remainingChars < 0;
@@ -112,46 +116,123 @@ export function Dashboard({
         </AnimatePresence>
       </header>
 
-      <main className="mt-6 pb-20 text-left">
-        <motion.div layout className="space-y-0 text-left">
-          <AnimatePresence mode="popLayout">
-            {logs.map((log) => (
-              <motion.div key={log.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}>
-                <LogItem 
-                  log={log} 
-                  onDelete={handleDelete} 
-                  onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
-                  onTagClick={(tag) => { triggerHaptic('medium'); setActiveTagFilter(prev => prev === tag ? null : tag); }} 
-                  onShare={onShare}
-                  lang={lang} 
-                  t={t}
-                  getTagColor={getTagColor}
-                  formatTimestamp={(ts) => {
-                    if (!ts) return '';
-                    const date = new Date(ts.seconds * 1000);
-                    const now = new Date();
-                    if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const yesterday = new Date(); yesterday.setDate(now.getDate() - 1);
-                    if (date.toDateString() === yesterday.toDateString()) return `${t.yesterday}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                    return `${date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'numeric', year: 'numeric' })}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                  }}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {logs.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium italic">
-              {activeTagFilter ? `Nenašiel som žiadne záznamy s ${activeTagFilter}` : t.noLogs}
+      {/* View Switcher */}
+      <div className="flex justify-center mb-6">
+        <div className="bg-apple-card/50 p-1 rounded-xl flex gap-1 border border-apple-border/50">
+          <button 
+            onClick={() => { triggerHaptic('light'); setView('list'); setCalendarSelectedDate(null); }}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${view === 'list' ? 'bg-apple-bg text-apple-text shadow-sm' : 'text-apple-secondary hover:text-apple-text'}`}
+          >
+            {t.viewList}
+          </button>
+          <button 
+            onClick={() => { triggerHaptic('light'); setView('calendar'); }}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${view === 'calendar' ? 'bg-apple-bg text-apple-text shadow-sm' : 'text-apple-secondary hover:text-apple-text'}`}
+          >
+            {t.viewCalendar}
+          </button>
+        </div>
+      </div>
+
+      <main className="pb-20 text-left">
+        <AnimatePresence mode="wait">
+          {view === 'list' ? (
+            <motion.div 
+              key="list"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-0 text-left"
+            >
+              <AnimatePresence mode="popLayout">
+                {logs
+                  .filter(log => {
+                    if (!log.timestamp) return false;
+                    return new Date(log.timestamp.seconds * 1000).toDateString() === new Date().toDateString();
+                  })
+                  .map((log) => (
+                  <motion.div key={log.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}>
+                    <LogItem 
+                      log={log} 
+                      onDelete={handleDelete} 
+                      onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
+                      onTagClick={(tag) => { triggerHaptic('medium'); setActiveTagFilter(prev => prev === tag ? null : tag); }} 
+                      onShare={onShare}
+                      lang={lang} 
+                      t={t}
+                      getTagColor={getTagColor}
+                      formatTimestamp={(ts) => {
+                        if (!ts) return '';
+                        const date = new Date(ts.seconds * 1000);
+                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {logs.filter(log => log.timestamp && new Date(log.timestamp.seconds * 1000).toDateString() === new Date().toDateString()).length === 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium italic">
+                  {t.noTodayLogs}
+                </motion.div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="calendar"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <CalendarView 
+                logs={logs} 
+                t={t} 
+                lang={lang} 
+                accentColor={accentColor}
+                onSelectDate={(date) => {
+                  triggerHaptic('light');
+                  setCalendarSelectedDate(date);
+                }}
+              />
+              
+              {calendarSelectedDate && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 border-t border-apple-border/50 pt-6"
+                >
+                  <h3 className="text-lg font-bold mb-4 text-apple-text">
+                    {calendarSelectedDate.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </h3>
+                  <div className="space-y-0">
+                    {logs.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === calendarSelectedDate.toDateString()).length > 0 ? (
+                      logs
+                        .filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === calendarSelectedDate.toDateString())
+                        .map(log => (
+                          <LogItem 
+                            key={log.id}
+                            log={log} 
+                            onDelete={handleDelete} 
+                            onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
+                            onTagClick={() => {}} 
+                            onShare={onShare}
+                            lang={lang} 
+                            t={t}
+                            getTagColor={getTagColor}
+                            formatTimestamp={(ts) => {
+                                const date = new Date(ts.seconds * 1000);
+                                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            }}
+                          />
+                        ))
+                    ) : (
+                      <p className="text-apple-secondary italic text-center py-4">{t.noLogs}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
-        </motion.div>
-        {hasMore && logs.length > 0 && !activeTagFilter && (
-          <div className="flex justify-center mt-6">
-            <button onClick={() => setLimitCount(prev => prev + 20)} className="text-sm font-semibold text-apple-secondary active:opacity-50">
-              {t.loadMore}
-            </button>
-          </div>
-        )}
+        </AnimatePresence>
       </main>
 
       <div className="fixed inset-0 flex items-center justify-center z-[120] pointer-events-none">

@@ -71,7 +71,9 @@ export const translations = {
     aiLoading: "Magická analýza prebieha...",
     aiError: "Ups, AI sa niekde zamotalo. Skús to neskôr.",
     aiClose: "Vďaka, mentor",
-    aiPrompt: "Tu je zoznam mojich úspechov za posledné dni. Správaj sa ako podporujúci a mierne stoický mentor. Stručne (max 3 vety) zhrň môj progres v slovenčine, vyzdvihni jeden trend alebo vzorec, ktorý vidíš, a jednou vetou ma silno motivuj do ďalšieho dňa. Používaj tykanie a priateľský, ale rešpektujúci tón."
+    aiPrompt: "Tu je zoznam mojich úspechov za posledné dni. Správaj sa ako podporujúci a mierne stoický mentor. Stručne (max 3 vety) zhrň môj progres v slovenčine, vyzdvihni jeden trend alebo vzorec, ktorý vidíš, a jednou vetou ma silno motivuj do ďalšieho dňa. Používaj tykanie a priateľský, ale rešpektujúci tón.",
+    viewList: "Dnes",
+    viewCalendar: "Kalendár"
   },
   en: {
     tagline: "Overcome achievement amnesia",
@@ -145,6 +147,8 @@ export const translations = {
     aiLoading: "Magic analysis in progress...",
     aiError: "Oops, AI got tangled up. Try again later.",
     aiClose: "Thanks, mentor",
-    aiPrompt: "Here is a list of my achievements from the last few days. Act as a supportive and slightly stoic mentor. Briefly (max 3 sentences) summarize my progress in English, highlight one trend or pattern you see, and give me one powerful sentence of motivation for the next day. Use a friendly but respectful tone."
+    aiPrompt: "Here is a list of my achievements from the last few days. Act as a supportive and slightly stoic mentor. Briefly (max 3 sentences) summarize my progress in English, highlight one trend or pattern you see, and give me one powerful sentence of motivation for the next day. Use a friendly but respectful tone.",
+    viewList: "Today",
+    viewCalendar: "Calendar"
   }
 };
