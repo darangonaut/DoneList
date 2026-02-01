@@ -8,7 +8,7 @@ export function Dashboard({
   user, logs, streak, heatmapData, t, lang, 
   activeTagFilter, setActiveTagFilter, getTagColor,
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
-  setIsSettingsOpen, setReflectionType, handleDelete, updateDoc, db, doc,
+  setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, updateDoc, db, doc,
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
   accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
   showStreak, showHeatmap, dailyGoal
@@ -67,9 +67,18 @@ export function Dashboard({
               </p>
             )}
           </motion.div>
-          <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">
-            {user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => { triggerHaptic('medium'); setIsAIModalOpen(true); }} 
+              className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center text-xl shadow-sm active:scale-90 transition-transform hover:bg-apple-border/20"
+              title={t.aiMotivator}
+            >
+              🔮
+            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">
+              {user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}
+            </button>
+          </div>
         </div>
 
         {showHeatmap && (

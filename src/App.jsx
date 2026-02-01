@@ -33,6 +33,7 @@ import { Dashboard } from './components/Dashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { ReflectionModal } from './components/ReflectionModal';
 import { VictoryCard } from './components/VictoryCard';
+import { AIInsightModal } from './components/AIInsightModal';
 
 const getLocalDateKey = (date = new Date()) => {
   const d = new Date(date);
@@ -89,6 +90,7 @@ function App() {
   const [dailyGoal, setDailyGoal] = useState(() => parseInt(localStorage.getItem('daily_goal')) || 3);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [reflectionType, setReflectionType] = useState(null); 
@@ -344,6 +346,7 @@ function App() {
             isEvening={isEvening} isSunday={isSunday} isLastDayOfMonth={isLastDayOfMonth}
             hasDailyTop={hasDailyTop} hasWeeklyTop={hasWeeklyTop} hasMonthlyTop={hasMonthlyTop}
             setIsSettingsOpen={setIsSettingsOpen} setReflectionType={setReflectionType}
+            setIsAIModalOpen={setIsAIModalOpen}
             handleDelete={handleDelete} updateDoc={updateDoc} db={db} doc={doc}
             isInputExpanded={isInputExpanded} setIsInputExpanded={setIsInputExpanded}
             inputText={inputText} setInputText={setInputText} addLog={addLog}
@@ -381,6 +384,13 @@ function App() {
             isOpen={!!sharingLog} log={sharingLog} 
             onClose={() => setSharingLog(null)} t={t} 
             accentColor={accentColor} 
+          />
+
+          <AIInsightModal 
+            isOpen={isAIModalOpen} 
+            onClose={() => setIsAIModalOpen(false)}
+            logs={logs} t={t} lang={lang} 
+            accentColor={accentColor}
           />
         </div>
       )}
