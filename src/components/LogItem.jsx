@@ -75,7 +75,16 @@ export function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t, isSelect
       >
         <div className="flex flex-col pr-4 flex-1 select-none text-apple-text">
           {isEditing ? (
-            <input ref={inputRef} type="text" value={editText} onChange={(e) => setEditText(e.target.value)} onBlur={handleUpdate} onKeyDown={handleKeyDown} className="bg-transparent border-none p-0 focus:ring-0 outline-none text-[17px] leading-tight font-normal w-full" />
+            <input 
+              ref={inputRef} 
+              type="text" 
+              maxLength={280}
+              value={editText} 
+              onChange={(e) => setEditText(e.target.value)} 
+              onBlur={handleUpdate} 
+              onKeyDown={handleKeyDown} 
+              className="bg-transparent border-none p-0 focus:ring-0 outline-none text-[17px] leading-tight font-normal w-full" 
+            />
           ) : (
             <div onClick={() => !isSelectable && setIsEditing(true)} className="text-[17px] leading-tight font-normal cursor-text whitespace-pre-wrap break-words flex items-start gap-2">
               {isMonthlyTop ? <span className="text-purple-500 shrink-0 mt-0.5">🏆</span> : 

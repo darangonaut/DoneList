@@ -2,6 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogItem } from './LogItem';
 
+const MAX_LENGTH = 280;
+
 export function Dashboard({ 
   user, logs, streak, heatmapData, t, lang, 
   activeTagFilter, setActiveTagFilter, getTagColor,
@@ -10,6 +12,10 @@ export function Dashboard({
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
   accentColor, triggerHaptic, hasMore, setLimitCount
 }) {
+  const remainingChars = MAX_LENGTH - inputText.length;
+  const isCloseToLimit = remainingChars <= 20;
+  const isOverLimit = remainingChars < 0;
+
   return (
     <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
       <header className="pt-12 pb-6 sticky top-0 bg-apple-bg/60 backdrop-blur-xl z-30 border-b border-apple-border/50 shadow-sm -mx-6 px-6 text-left">
@@ -117,8 +123,38 @@ export function Dashboard({
               <div className="w-full max-w-xl relative text-center">
                 <button onClick={() => setIsInputExpanded(false)} className="absolute -top-32 right-0 text-apple-secondary font-bold text-lg p-4 active:opacity-50">{t.back}</button>
                 <form onSubmit={addLog} className="w-full space-y-8">
-                  <textarea ref={inputRef} value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={t.placeholder} className="w-full bg-transparent border-none text-3xl md:text-4xl font-bold text-apple-text placeholder:text-apple-secondary/30 focus:ring-0 outline-none resize-none min-h-[200px]" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addLog(); } if (e.key === 'Escape') setIsInputExpanded(false); }} />
-                  <button type="submit" style={{ backgroundColor: accentColor }} className="w-full py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl active:scale-95 transition-all">{lang === 'sk' ? 'Uložiť víťazstvo' : 'Save Victory'}</button>
+                  <div className="relative">
+                    <textarea 
+                      ref={inputRef} 
+                      value={inputText} 
+                      onChange={(e) => setInputText(e.target.value)} 
+                      placeholder={t.placeholder} 
+                      className="w-full bg-transparent border-none text-3xl md:text-4xl font-bold text-apple-text placeholder:text-apple-secondary/30 focus:ring-0 outline-none resize-none min-h-[200px]" 
+                      onKeyDown={(e) => { 
+                        if (e.key === 'Enter' && !e.shiftKey) { 
+                          if (!isOverLimit) {
+                            e.preventDefault(); 
+                            addLog(); 
+                          } else {
+                            e.preventDefault();
+                            triggerHaptic('medium');
+                          }
+                        } 
+                        if (e.key === 'Escape') setIsInputExpanded(false); 
+                      }} 
+                    />
+                    <div className={`absolute -bottom-4 right-0 font-black text-sm tracking-widest transition-colors duration-300 ${isOverLimit ? 'text-red-500' : isCloseToLimit ? 'text-orange-500' : 'text-apple-secondary/40'}`}>
+                      {remainingChars}
+                    </div>
+                  </div>
+                  <button 
+                    type="submit" 
+                    disabled={isOverLimit || !inputText.trim()}
+                    style={{ backgroundColor: isOverLimit ? '#3a3a3c' : accentColor }} 
+                    className={`w-full py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl transition-all ${isOverLimit || !inputText.trim() ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+                  >
+                    {lang === 'sk' ? 'Uložiť víťazstvo' : 'Save Victory'}
+                  </button>
                 </form>
               </div>
             </motion.div>

@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Pravidlá pre záznamy úspechov (logs)
+    match /logs/{logId} {
+      // Povoliť čítanie, mazanie a update len ak záznam patrí prihlásenému používateľovi
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Povoliť vytvorenie len ak používateľ nastavuje svoje vlastné UID
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Pravidlá pre štatistiky a série (userStats)
+    match /userStats/{userId} {
+      // Dokument je pomenovaný podľa UID používateľa, takže kontrola je jednoduchá
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
