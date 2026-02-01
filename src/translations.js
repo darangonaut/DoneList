@@ -41,7 +41,19 @@ export const translations = {
     graph1Failures: "Chyby",
     graph1Successes: "Úspechy",
     graph2Title: "Rast sebavedomia",
-    graph2Desc: "Malé, konzistentné víťazstvá vytvárajú zložené úročenie tvojej vnútornej sily."
+    graph2Desc: "Malé, konzistentné víťazstvá vytvárajú zložené úročenie tvojej vnútornej sily.",
+    reflection: "Reflexia",
+    reflectionTitle: "Víťazstvo dňa",
+    reflectionSubtitle: "Ktorý z dnešných momentov bol pre teba najdôležitejší?",
+    reflectionSave: "Zvoliť ako Top Moment",
+    reflectionDone: "Skvelá voľba pre dnešok! ✨",
+    noTodayLogs: "Dnes si ešte nič nezapísal. Najprv pridaj aspoň jeden úspech!",
+    weeklyReflection: "Týždenný Top",
+    weeklyReflectionSubtitle: "Vyber si najväčší klenot tvojho týždňa.",
+    weeklyDone: "Tvoj týždeň bol úžasný! 💎",
+    monthlyReflection: "Mesačný Top",
+    monthlyReflectionSubtitle: "Ktorý úspech najviac definoval tvoj mesiac?",
+    monthlyDone: "Si legenda! Tento mesiac stál za to. 🏆"
   },
   en: {
     tagline: "Overcome achievement amnesia",
@@ -85,6 +97,18 @@ export const translations = {
     graph1Failures: "Failures",
     graph1Successes: "Wins",
     graph2Title: "Confidence Growth",
-    graph2Desc: "Small, consistent wins create compound interest for your inner strength."
+    graph2Desc: "Small, consistent wins create compound interest for your inner strength.",
+    reflection: "Reflection",
+    reflectionTitle: "Win of the Day",
+    reflectionSubtitle: "Which moment from today was the most important to you?",
+    reflectionSave: "Select as Top Moment",
+    reflectionDone: "Great choice for today! ✨",
+    noTodayLogs: "Nothing logged today yet. Add at least one win first!",
+    weeklyReflection: "Weekly Top",
+    weeklyReflectionSubtitle: "Choose the crown jewel of your week.",
+    weeklyDone: "Your week was amazing! 💎",
+    monthlyReflection: "Monthly Top",
+    monthlyReflectionSubtitle: "Which victory defined your month?",
+    monthlyDone: "You're a legend! This month was worth it. 🏆"
   }
 };
