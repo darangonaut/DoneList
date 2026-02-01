@@ -23,7 +23,7 @@ export const translations = {
     promo3Title: "Dôkaz namiesto pocitov",
     promo3Desc: "Keď príde zlý deň, tvoj archív je jasným dôkazom, že si schopný skvelých vecí.",
     promo4Title: "Budovanie disciplíny",
-    promo4Desc: "Sledovanie série (streak) ťa udrží v pohybe aj vtedy, keď sa ti práve nechce.",
+    promo4Desc: "Sledovanie série (streak) ťa udrží v pohybe aj vtedy, kedy sa ti práve nechce.",
     appTitle: "Minimalizmus v službe psychológie",
     appItem1: "Rýchlosť: Zápis trvá 3 sekundy.",
     appItem2: "Prehľad: Heatmapa tvojho roka.",
@@ -53,7 +53,12 @@ export const translations = {
     weeklyDone: "Tvoj týždeň bol úžasný! 💎",
     monthlyReflection: "Mesačný Top",
     monthlyReflectionSubtitle: "Ktorý úspech najviac definoval tvoj mesiac?",
-    monthlyDone: "Si legenda! Tento mesiac stál za to. 🏆"
+    monthlyDone: "Si legenda! Tento mesiac stál za to. 🏆",
+    shareVictory: "Zdieľať úspech",
+    saveImage: "Uložiť obrázok",
+    dailyWin: "Úspech dňa",
+    weeklyWin: "Klenot týždňa",
+    monthlyWin: "Trofej mesiaca"
   },
   en: {
     tagline: "Overcome achievement amnesia",
@@ -109,6 +114,11 @@ export const translations = {
     weeklyDone: "Your week was amazing! 💎",
     monthlyReflection: "Monthly Top",
     monthlyReflectionSubtitle: "Which victory defined your month?",
-    monthlyDone: "You're a legend! This month was worth it. 🏆"
+    monthlyDone: "You're a legend! This month was worth it. 🏆",
+    shareVictory: "Share Victory",
+    saveImage: "Save Image",
+    dailyWin: "Daily Win",
+    weeklyWin: "Weekly Jewel",
+    monthlyWin: "Monthly Trophy"
   }
 };

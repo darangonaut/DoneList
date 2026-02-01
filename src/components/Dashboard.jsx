@@ -10,7 +10,7 @@ export function Dashboard({
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
   setIsSettingsOpen, setReflectionType, handleDelete, updateDoc, db, doc,
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
-  accentColor, triggerHaptic, hasMore, setLimitCount
+  accentColor, triggerHaptic, hasMore, setLimitCount, onShare
 }) {
   const remainingChars = MAX_LENGTH - inputText.length;
   const isCloseToLimit = remainingChars <= 20;
@@ -82,6 +82,7 @@ export function Dashboard({
                   onDelete={handleDelete} 
                   onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
                   onTagClick={(tag) => { triggerHaptic('medium'); setActiveTagFilter(prev => prev === tag ? null : tag); }} 
+                  onShare={onShare}
                   lang={lang} 
                   t={t}
                   getTagColor={getTagColor}

@@ -31,6 +31,7 @@ import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { ReflectionModal } from './components/ReflectionModal';
+import { VictoryCard } from './components/VictoryCard';
 
 const getLocalDateKey = (date = new Date()) => {
   const d = new Date(date);
@@ -88,21 +89,11 @@ function App() {
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [reflectionType, setReflectionType] = useState(null); 
+  const [sharingLog, setSharingLog] = useState(null);
   const inputRef = useRef(null);
 
   const streak = useMemo(() => calculateDynamicStreak(dailyStats), [dailyStats]);
-
-  const heatmapData = useMemo(() => {
-    const days = []; const today = new Date();
-    for (let i = 139; i >= 0; i--) {
-      const d = new Date(); d.setDate(today.getDate() - i); const key = getLocalDateKey(d);
-      let dominantTagColor = null; const dayTags = dailyTags[key] || {}; const tagEntries = Object.entries(dayTags);
-      if (tagEntries.length > 0) { const topTag = tagEntries.sort((a, b) => b[1] - a[1])[0][0]; dominantTagColor = getTagColor(topTag); }
-      days.push({ key, count: dailyStats[key] || 0, color: dominantTagColor });
-    }
-    return days;
-  }, [dailyStats, dailyTags]);
-
+  
   const todayLogs = useMemo(() => {
     const today = new Date().toDateString();
     return logs.filter(log => log.timestamp && new Date(log.timestamp.seconds * 1000).toDateString() === today);
@@ -197,6 +188,17 @@ function App() {
     return unsub;
   }, [user, activeTagFilter]);
 
+  const heatmapData = useMemo(() => {
+    const days = []; const today = new Date();
+    for (let i = 139; i >= 0; i--) {
+      const d = new Date(); d.setDate(today.getDate() - i); const key = getLocalDateKey(d);
+      let dominantTagColor = null; const dayTags = dailyTags[key] || {}; const tagEntries = Object.entries(dayTags);
+      if (tagEntries.length > 0) { const topTag = tagEntries.sort((a, b) => b[1] - a[1])[0][0]; dominantTagColor = getTagColor(topTag); }
+      days.push({ key, count: dailyStats[key] || 0, color: dominantTagColor });
+    }
+    return days;
+  }, [dailyStats, dailyTags]);
+
   const handleLogin = () => { setLoading(true); signInWithRedirect(auth, googleProvider); };
   const handleLogout = () => { setIsSettingsOpen(false); signOut(auth); };
 
@@ -244,10 +246,10 @@ function App() {
     } catch (e) { console.error(e); }
   };
 
-  if (loading && !user) return <div className="min-h-screen bg-apple-bg"></div>;
+  if (loading && !user) return <div className="min-h-screen bg-apple-bg transition-colors duration-500"></div>;
 
   return (
-    <div className="min-h-screen bg-apple-bg transition-colors duration-500 selection:bg-[var(--accent-color)] selection:text-white">
+    <div className="min-h-screen bg-apple-bg transition-colors duration-500 selection:bg-[var(--accent-color)] selection:text-white relative">
       {!user ? (
         <LandingPage 
           t={t} 
@@ -256,7 +258,7 @@ function App() {
           handleLogin={handleLogin} 
         />
       ) : (
-        <>
+        <div className="min-h-screen bg-apple-bg transition-colors duration-500">
           <BackgroundBlobs accentColor={accentColor} />
           
           <Dashboard 
@@ -271,6 +273,7 @@ function App() {
             inputText={inputText} setInputText={setInputText} addLog={addLog}
             inputRef={inputRef} accentColor={accentColor} triggerHaptic={triggerHaptic}
             hasMore={hasMore} setLimitCount={setLimitCount}
+            onShare={(log) => setSharingLog(log)}
           />
 
           <SettingsModal 
@@ -291,7 +294,13 @@ function App() {
               return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }}
           />
-        </>
+
+          <VictoryCard 
+            isOpen={!!sharingLog} log={sharingLog} 
+            onClose={() => setSharingLog(null)} t={t} 
+            accentColor={accentColor} 
+          />
+        </div>
       )}
       
       <AnimatePresence>
