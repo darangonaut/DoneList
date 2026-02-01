@@ -84,7 +84,6 @@ function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t, isSelectable = 
   useEffect(() => { if (isEditing && inputRef.current) inputRef.current.focus(); }, [isEditing]);
   const handleUpdate = () => { if (editText.trim() !== '' && editText !== log.text) onUpdate(log.id, editText); setIsEditing(false); };
   const handleKeyDown = (e) => { if (e.key === 'Enter') handleUpdate(); if (e.key === 'Escape') { setEditText(log.text); setIsEditing(false); } };
-  
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp.seconds * 1000);
@@ -94,7 +93,6 @@ function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t, isSelectable = 
     if (date.toDateString() === yesterday.toDateString()) return `${t.yesterday}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     return `${date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'numeric', year: 'numeric' })}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
-
   const renderTextWithTags = (text) => {
     if (!text) return '';
     const parts = text.split(/(#\w+)/g);
@@ -106,43 +104,11 @@ function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t, isSelectable = 
       return part;
     });
   };
-
   const { isTopWin, isWeeklyTop, isMonthlyTop } = log;
-
   return (
-    <div className={`relative overflow-hidden rounded-2xl mb-3 shadow-sm transition-all duration-500 
-      ${isMonthlyTop ? 'ring-2 ring-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.4)]' : 
-        isWeeklyTop ? 'ring-2 ring-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.3)]' : 
-        isTopWin ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]' : ''}`}>
-      {!isSelectable && (
-        <motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center">
-          <button onClick={() => onDelete(log)} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">−</button>
-        </motion.div>
-      )}
-      <motion.div 
-        drag={isEditing || isSelectable ? false : "x"} 
-        dragConstraints={{ left: -80, right: 0 }} 
-        dragElastic={0.1} 
-        style={{ x }} 
-        onClick={() => isSelectable && onSelect(log.id)}
-        className={`bg-apple-card/80 backdrop-blur-xl p-4 border flex justify-between items-center relative z-10 rounded-2xl touch-pan-y 
-          ${isSelectable ? 'cursor-pointer active:scale-95 transition-transform' : ''} 
-          ${isMonthlyTop ? 'border-purple-500/50' : isWeeklyTop ? 'border-blue-400/50' : isTopWin ? 'border-yellow-400/50' : 'border-apple-border'}`}
-      >
-        <div className="flex flex-col pr-4 flex-1 select-none text-apple-text">
-          {isEditing ? (
-            <input ref={inputRef} type="text" value={editText} onChange={(e) => setEditText(e.target.value)} onBlur={handleUpdate} onKeyDown={handleKeyDown} className="bg-transparent border-none p-0 focus:ring-0 outline-none text-[17px] leading-tight font-normal w-full" />
-          ) : (
-            <div onClick={() => !isSelectable && setIsEditing(true)} className="text-[17px] leading-tight font-normal cursor-text whitespace-pre-wrap break-words flex items-start gap-2">
-              {isMonthlyTop ? <span className="text-purple-500 shrink-0 mt-0.5">🏆</span> : 
-               isWeeklyTop ? <span className="text-blue-400 shrink-0 mt-0.5">💎</span> : 
-               isTopWin ? <span className="text-yellow-500 shrink-0 mt-0.5">🌟</span> : null}
-              <span>{renderTextWithTags(log.text)}</span>
-            </div>
-          )}
-          <span className="text-[13px] text-apple-secondary mt-1">{formatTimestamp(log.timestamp)}</span>
-        </div>
-      </motion.div>
+    <div className={`relative overflow-hidden rounded-2xl mb-3 shadow-sm transition-all duration-500 ${isMonthlyTop ? 'ring-2 ring-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.4)]' : isWeeklyTop ? 'ring-2 ring-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.3)]' : isTopWin ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]' : ''}`}>
+      {!isSelectable && (<motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center"><button onClick={() => onDelete(log)} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">−</button></motion.div>)}
+      <motion.div drag={isEditing || isSelectable ? false : "x"} dragConstraints={{ left: -80, right: 0 }} dragElastic={0.1} style={{ x }} onClick={() => isSelectable && onSelect(log.id)} className={`bg-apple-card/80 backdrop-blur-xl p-4 border flex justify-between items-center relative z-10 rounded-2xl touch-pan-y ${isSelectable ? 'cursor-pointer active:scale-95 transition-transform' : ''} ${isMonthlyTop ? 'border-purple-500/50' : isWeeklyTop ? 'border-blue-400/50' : isTopWin ? 'border-yellow-400/50' : 'border-apple-border'}`}><div className="flex flex-col pr-4 flex-1 select-none text-apple-text">{isEditing ? <input ref={inputRef} type="text" value={editText} onChange={(e) => setEditText(e.target.value)} onBlur={handleUpdate} onKeyDown={handleKeyDown} className="bg-transparent border-none p-0 focus:ring-0 outline-none text-[17px] leading-tight font-normal w-full" /> : <div onClick={() => !isSelectable && setIsEditing(true)} className="text-[17px] leading-tight font-normal cursor-text whitespace-pre-wrap break-words flex items-start gap-2">{isMonthlyTop ? <span className="text-purple-500 shrink-0 mt-0.5">🏆</span> : isWeeklyTop ? <span className="text-blue-400 shrink-0 mt-0.5">💎</span> : isTopWin ? <span className="text-yellow-500 shrink-0 mt-0.5">🌟</span> : null}<span>{renderTextWithTags(log.text)}</span></div>}<span className="text-[13px] text-apple-secondary mt-1">{formatTimestamp(log.timestamp)}</span></div></motion.div>
     </div>
   );
 }
@@ -166,49 +132,16 @@ function App() {
   const inputRef = useRef(null);
 
   const streak = useMemo(() => calculateDynamicStreak(dailyStats), [dailyStats]);
-
-  const todayLogs = useMemo(() => {
-    const today = new Date().toDateString();
-    return logs.filter(log => log.timestamp && new Date(log.timestamp.seconds * 1000).toDateString() === today);
-  }, [logs]);
-
-  const candidates = useMemo(() => {
-    if (reflectionType === 'daily') return todayLogs;
-    if (reflectionType === 'weekly') {
-      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-      return logs.filter(l => l.isTopWin && l.timestamp && new Date(l.timestamp.seconds * 1000) > weekAgo);
-    }
-    if (reflectionType === 'monthly') {
-      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-      return logs.filter(l => l.isWeeklyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) >= monthStart);
-    }
-    return [];
-  }, [logs, todayLogs, reflectionType]);
-
+  const todayLogs = useMemo(() => { const today = new Date().toDateString(); return logs.filter(log => log.timestamp && new Date(log.timestamp.seconds * 1000).toDateString() === today); }, [logs]);
+  const candidates = useMemo(() => { if (reflectionType === 'daily') return todayLogs; if (reflectionType === 'weekly') { const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); return logs.filter(l => l.isTopWin && l.timestamp && new Date(l.timestamp.seconds * 1000) > weekAgo); } if (reflectionType === 'monthly') { const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0); return logs.filter(l => l.isWeeklyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) >= monthStart); } return []; }, [logs, todayLogs, reflectionType]);
   const hasDailyTop = useMemo(() => logs.some(l => l.isTopWin && new Date(l.timestamp?.seconds * 1000).toDateString() === new Date().toDateString()), [logs]);
-  const hasWeeklyTop = useMemo(() => {
-    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-    return logs.some(l => l.isWeeklyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) > weekAgo);
-  }, [logs]);
-  const hasMonthlyTop = useMemo(() => {
-    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-    return logs.some(l => l.isMonthlyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) >= monthStart);
-  }, [logs]);
-
+  const hasWeeklyTop = useMemo(() => { const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); return logs.some(l => l.isWeeklyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) > weekAgo); }, [logs]);
+  const hasMonthlyTop = useMemo(() => { const monthStart = new Date(); monthStart.setDate(1); return logs.some(l => l.isMonthlyTop && l.timestamp && new Date(l.timestamp.seconds * 1000) >= monthStart); }, [logs]);
   const isSunday = new Date().getDay() === 0;
-  const isLastDayOfMonth = () => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() === d.getDate();
-  };
-
+  const isLastDayOfMonth = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() === d.getDate(); };
   const isEvening = new Date().getHours() >= 10; 
 
-  const triggerHaptic = (type = 'light') => {
-    if (!window.navigator.vibrate) return;
-    const patterns = { light: 10, medium: 20, success: [10, 30, 10] };
-    window.navigator.vibrate(patterns[type] || 10);
-  };
-
+  const triggerHaptic = (type = 'light') => { if (!window.navigator.vibrate) return; const patterns = { light: 10, medium: 20, success: [10, 30, 10] }; window.navigator.vibrate(patterns[type] || 10); };
   useEffect(() => { getRedirectResult(auth).catch((e) => console.error("Redirect Error", e)); }, []);
   const t = translations[lang] || translations.sk;
   useEffect(() => { localStorage.setItem('lang', lang); }, [lang]);
@@ -236,11 +169,8 @@ function App() {
               }
             });
             if (healed) await setDoc(sRef, { dailyCounts: currentCounts, dailyTags: currentTags }, { merge: true });
-            setDailyStats(currentCounts);
-            setDailyTags(currentTags);
-          } else {
-            await setDoc(sRef, { dailyCounts: {}, dailyTags: {}, streak: 0 }, { merge: true });
-          }
+            setDailyStats(currentCounts); setDailyTags(currentTags);
+          } else { await setDoc(sRef, { dailyCounts: {}, dailyTags: {}, streak: 0 }, { merge: true }); }
           setLoading(false);
         });
       } else { setLoading(false); }
@@ -261,18 +191,11 @@ function App() {
   }, [user, activeTagFilter]);
 
   const heatmapData = useMemo(() => {
-    const days = [];
-    const today = new Date();
+    const days = []; const today = new Date();
     for (let i = 139; i >= 0; i--) {
-      const d = new Date(); d.setDate(today.getDate() - i);
-      const key = getLocalDateKey(d);
-      let dominantTagColor = null;
-      const dayTags = dailyTags[key] || {};
-      const tagEntries = Object.entries(dayTags);
-      if (tagEntries.length > 0) {
-        const topTag = tagEntries.sort((a, b) => b[1] - a[1])[0][0];
-        dominantTagColor = getTagColor(topTag);
-      }
+      const d = new Date(); d.setDate(today.getDate() - i); const key = getLocalDateKey(d);
+      let dominantTagColor = null; const dayTags = dailyTags[key] || {}; const tagEntries = Object.entries(dayTags);
+      if (tagEntries.length > 0) { const topTag = tagEntries.sort((a, b) => b[1] - a[1])[0][0]; dominantTagColor = getTagColor(topTag); }
       days.push({ key, count: dailyStats[key] || 0, color: dominantTagColor });
     }
     return days;
@@ -282,70 +205,31 @@ function App() {
   const handleLogout = () => { setIsSettingsOpen(false); signOut(auth); };
 
   const addLog = async (e) => {
-    if (e) e.preventDefault();
-    if (!inputText.trim()) return;
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    triggerHaptic('light');
-    const todayKey = getLocalDateKey();
-    const foundTags = inputText.match(/#\w+/g) || [];
+    if (e) e.preventDefault(); if (!inputText.trim()) return; if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    triggerHaptic('light'); const todayKey = getLocalDateKey(); const foundTags = inputText.match(/#\w+/g) || [];
     const updatedDailyCounts = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
     const updatedDailyTags = { ...dailyTags, [todayKey]: { ...(dailyTags[todayKey] || {}) } };
     foundTags.forEach(tag => { updatedDailyTags[todayKey][tag] = (updatedDailyTags[todayKey][tag] || 0) + 1; });
-    setDailyStats(updatedDailyCounts);
-    setDailyTags(updatedDailyTags);
-    setIsInputExpanded(false);
+    setDailyStats(updatedDailyCounts); setDailyTags(updatedDailyTags); setIsInputExpanded(false);
     try {
       await addDoc(collection(db, 'logs'), { userId: user.uid, text: inputText, tags: foundTags, timestamp: serverTimestamp(), isTopWin: false, isWeeklyTop: false, isMonthlyTop: false });
       const sRef = doc(db, 'userStats', user.uid);
       const newCalculatedStreak = calculateDynamicStreak(updatedDailyCounts);
       await setDoc(sRef, { dailyCounts: updatedDailyCounts, dailyTags: updatedDailyTags, lastDateKey: todayKey, streak: newCalculatedStreak, lastUpdate: serverTimestamp() }, { merge: true });
-      if ([7, 30, 100].includes(newCalculatedStreak) && updatedDailyCounts[todayKey] === 1) {
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        setFeedback(`WAAAU! ${newCalculatedStreak} dňová séria! 🏆`);
-      } else { setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]); }
-      setInputText('');
-      setTimeout(() => setFeedback(''), 4000);
+      if ([7, 30, 100].includes(newCalculatedStreak) && updatedDailyCounts[todayKey] === 1) { confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); setFeedback(`WAAAU! ${newCalculatedStreak} dňová séria! 🏆`); } else { setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]); }
+      setInputText(''); setTimeout(() => setFeedback(''), 4000);
     } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (log) => {
     const isSpecial = log.isTopWin || log.isWeeklyTop || log.isMonthlyTop;
     triggerHaptic(isSpecial ? 'medium' : 'light');
-    
     const logDateKey = getLocalDateKey(log.timestamp.toDate());
-    
-    // 1. Aktualizácia dailyCounts
     const updatedDailyCounts = { ...dailyStats };
-    if (updatedDailyCounts[logDateKey] > 0) {
-      updatedDailyCounts[logDateKey] -= 1;
-      if (updatedDailyCounts[logDateKey] === 0) delete updatedDailyCounts[logDateKey];
-    }
-
-    // 2. Aktualizácia dailyTags
+    if (updatedDailyCounts[logDateKey] > 0) { updatedDailyCounts[logDateKey] -= 1; if (updatedDailyCounts[logDateKey] === 0) delete updatedDailyCounts[logDateKey]; }
     const updatedDailyTags = { ...dailyTags };
-    if (log.tags && updatedDailyTags[logDateKey]) {
-      log.tags.forEach(tag => {
-        if (updatedDailyTags[logDateKey][tag] > 0) {
-          updatedDailyTags[logDateKey][tag] -= 1;
-          if (updatedDailyTags[logDateKey][tag] === 0) delete updatedDailyTags[logDateKey][tag];
-        }
-      });
-      if (Object.keys(updatedDailyTags[logDateKey]).length === 0) delete updatedDailyTags[logDateKey];
-    }
-
-    try {
-      // 3. Firestore operácie
-      await deleteDoc(doc(db, 'logs', log.id));
-      const sRef = doc(db, 'userStats', user.uid);
-      await setDoc(sRef, { 
-        dailyCounts: updatedDailyCounts, 
-        dailyTags: updatedDailyTags,
-        streak: calculateDynamicStreak(updatedDailyCounts)
-      }, { merge: true });
-      
-      setDailyStats(updatedDailyCounts);
-      setDailyTags(updatedDailyTags);
-    } catch (e) { console.error("Delete Error:", e); }
+    if (log.tags && updatedDailyTags[logDateKey]) { log.tags.forEach(tag => { if (updatedDailyTags[logDateKey][tag] > 0) { updatedDailyTags[logDateKey][tag] -= 1; if (updatedDailyTags[logDateKey][tag] === 0) delete updatedDailyTags[logDateKey][tag]; } }); if (Object.keys(updatedDailyTags[logDateKey]).length === 0) delete updatedDailyTags[logDateKey]; }
+    try { await deleteDoc(doc(db, 'logs', log.id)); const sRef = doc(db, 'userStats', user.uid); await setDoc(sRef, { dailyCounts: updatedDailyCounts, dailyTags: updatedDailyTags, streak: calculateDynamicStreak(updatedDailyCounts) }, { merge: true }); setDailyStats(updatedDailyCounts); setDailyTags(updatedDailyTags); } catch (e) { console.error(e); }
   };
 
   const selectTopWin = async (logId) => {
@@ -353,17 +237,11 @@ function App() {
     const field = reflectionType === 'daily' ? 'isTopWin' : reflectionType === 'weekly' ? 'isWeeklyTop' : 'isMonthlyTop';
     const confColors = reflectionType === 'daily' ? ['#FFD700'] : reflectionType === 'weekly' ? ['#60A5FA'] : ['#A855F7'];
     const message = reflectionType === 'daily' ? t.reflectionDone : reflectionType === 'weekly' ? t.weeklyDone : t.monthlyDone;
-
     try {
       const oldTops = logs.filter(l => l[field]);
-      for (const old of oldTops) {
-        if (old.id !== logId) await updateDoc(doc(db, 'logs', old.id), { [field]: false });
-      }
+      for (const old of oldTops) { if (old.id !== logId) await updateDoc(doc(db, 'logs', old.id), { [field]: false }); }
       await updateDoc(doc(db, 'logs', logId), { [field]: true });
-      setReflectionType(null);
-      confetti({ particleCount: 150, spread: 60, origin: { y: 0.8 }, colors: confColors });
-      setFeedback(message);
-      setTimeout(() => setFeedback(''), 4000);
+      setReflectionType(null); confetti({ particleCount: 150, spread: 60, origin: { y: 0.8 }, colors: confColors }); setFeedback(message); setTimeout(() => setFeedback(''), 4000);
     } catch (e) { console.error(e); }
   };
 
@@ -379,9 +257,36 @@ function App() {
         <motion.div animate={{ scale: [1.2, 1, 1.2], rotate: [0, -120, 0], x: [100, -100, 100], y: [50, -50, 50] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] rounded-full bg-blue-400 dark:bg-blue-600 blur-[120px]" />
         <motion.div animate={{ scale: [1, 1.3, 1], x: [0, 50, 0], y: [0, 100, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-purple-400 dark:bg-purple-600 blur-[100px]" />
       </div>
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 py-12 text-center flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-7xl md:text-9xl font-black mb-8 tracking-tighter bg-gradient-to-b from-black dark:from-white to-black/40 dark:to-white/60 bg-clip-text text-transparent">{t.title}</h1>
-        <button onClick={handleLogin} className="bg-black dark:bg-white text-white dark:text-black py-5 px-10 rounded-full font-bold text-xl active:scale-95 transition-all shadow-2xl">{t.login}</button>
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 py-12">
+        <section className="min-h-[70vh] flex flex-col items-center justify-center text-center mb-12">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full flex flex-col items-center">
+            <span className="inline-block px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-black/60 dark:text-white/60">{t.tagline}</span>
+            <h1 className="text-7xl md:text-9xl font-black mb-6 tracking-tighter bg-gradient-to-b from-black dark:from-white to-black/40 dark:to-white/60 bg-clip-text text-transparent">{t.title}</h1>
+            <p className="text-xl md:text-2xl text-black/60 dark:text-white/60 font-medium leading-relaxed max-w-lg mx-auto mb-10">{t.subtitle}</p>
+            <button onClick={handleLogin} className="w-full max-w-sm bg-black dark:bg-white text-white dark:text-black py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 mx-auto"><svg className="w-7 h-7" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>{t.login}</button>
+          </motion.div>
+        </section>
+        <section className="py-16 border-t border-black/5 dark:border-white/10 overflow-hidden text-center">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-12"><h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-2">{t.scienceTitle}</h2></motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-black/[0.02] dark:bg-white/5 p-6 md:p-8 rounded-[2rem] border border-black/[0.05] dark:border-white/10 flex flex-col h-[450px]">
+              <h3 className="text-lg font-bold mb-14 opacity-80">{t.graph1Title}</h3>
+              <div className="flex-1 flex items-end justify-around gap-4 relative px-4 border-b border-black/10 dark:border-white/10 pb-8">
+                <div className="flex-1 flex flex-col items-center gap-6 h-full justify-end relative"><div className="w-full flex justify-center items-end gap-1.5 h-full"><motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "circOut" }} style={{ originY: 1 }} className="w-8 md:w-10 bg-red-500 rounded-t-xl h-[70%]" /><motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }} style={{ originY: 1 }} className="w-8 md:w-10 bg-[var(--accent-color)]/30 rounded-t-xl h-[20%]" /></div><div className="absolute -bottom-8 w-full"><span className="text-[9px] font-black uppercase tracking-widest opacity-40 block">{t.graph1Before}</span></div></div>
+                <div className="flex-1 flex flex-col items-center gap-6 h-full justify-end relative"><div className="w-full flex justify-center items-end gap-1.5 h-full"><motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "circOut", delay: 0.4 }} style={{ originY: 1 }} className="w-8 md:w-10 bg-red-500/20 rounded-t-xl h-[15%]" /><motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "circOut", delay: 0.6 }} style={{ originY: 1 }} className="w-8 md:w-10 bg-[var(--accent-color)] rounded-t-xl h-[95%] shadow-[0_0_40px_var(--accent-color)]" /></div><div className="absolute -bottom-8 w-full"><span className="text-[9px] font-black uppercase tracking-widest block">{t.graph1After}</span></div></div>
+              </div>
+              <div className="mt-14 flex justify-center gap-6 text-[9px] font-bold uppercase tracking-widest opacity-50"><span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500" />{t.graph1Failures}</span><span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-color)]" />{t.graph1Successes}</span></div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-black/[0.02] dark:bg-white/5 p-6 md:p-8 rounded-[2rem] border border-black/[0.05] dark:border-white/10 flex flex-col h-[450px] relative overflow-hidden text-center">
+              <h3 className="text-lg font-bold mb-2 opacity-80">{t.graph2Title}</h3><p className="text-xs opacity-40 mb-10">{t.graph2Desc}</p>
+              <div className="flex-1 relative mt-10 border-b border-black/10 dark:border-white/10 mb-8"><svg viewBox="0 0 200 100" className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="chartGradientMain" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--accent-color)" stopOpacity="0.4" /><stop offset="100%" stopColor="var(--accent-color)" stopOpacity="0" /></linearGradient></defs><motion.path d="M0,95 C40,90 60,70 100,50 S160,10 200,5" fill="none" stroke="var(--accent-color)" strokeWidth="6" strokeLinecap="round" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 2.5, ease: "easeInOut" }} /><motion.path d="M0,95 C40,90 60,70 100,50 S160,10 200,5 L200,100 L0,100 Z" fill="url(#chartGradientMain)" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 1.5, delay: 1 }} /></svg></div>
+              <div className="flex justify-between text-[9px] font-black uppercase tracking-[0.3em] opacity-30 mt-2"><span>Day 1</span><span>Day 100</span></div>
+            </motion.div>
+          </div>
+        </section>
+        <section className="py-16 border-t border-black/5 dark:border-white/10 text-center"><motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-lg mx-auto mb-12"><h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">{t.promoTitle}</h2><p className="text-lg text-black/40 dark:text-white/50 leading-relaxed italic">"{t.promoIntro}"</p></motion.div><div className="grid gap-6">{[{ icon: '🧠', title: t.promo1Title, desc: t.promo1Desc }, { icon: '⚡️', title: t.promo2Title, desc: t.promo2Desc }, { icon: '📈', title: t.promo3Title, desc: t.promo3Desc }, { icon: '⛽️', title: t.promo4Title, desc: t.promo4Desc }].map((item, i) => (<motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-black/[0.03] dark:bg-white/5 border border-black/[0.05] dark:border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col md:flex-row gap-6 items-start transition-colors text-left"><span className="text-4xl shrink-0">{item.icon}</span><div><h3 className="text-xl font-bold mb-2">{item.title}</h3><p className="text-black/50 dark:text-white/50 text-[17px] leading-relaxed">{item.desc}</p></div></motion.div>))}</div></section>
+        <section className="py-16 border-t border-black/5 dark:border-white/10 w-full text-center"><motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="text-2xl font-bold mb-10">{t.appTitle}</motion.h2><div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mb-12">{[t.appItem1, t.appItem2, t.appItem3].map((item, i) => (<motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-black/[0.03] dark:bg-white/5 p-5 rounded-2xl border border-black/[0.05] dark:border-white/10 text-center"><p className="font-bold text-[15px]">⚡️ {item}</p></motion.div>))}</div><motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/20 p-6 md:p-8 rounded-[2rem] max-w-lg mx-auto"><h3 className="text-lg font-bold mb-2 text-[var(--accent-color)]">{t.tipTitle}</h3><p className="text-black/60 dark:text-white/70 text-[17px] leading-relaxed">{t.tipDesc}</p></motion.div></section>
+        <section className="py-16 text-center"><button onClick={handleLogin} className="w-full max-w-sm bg-black dark:bg-white text-white dark:text-black py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all mb-10 mx-auto block">{t.login}</button><div className="flex justify-center gap-10"><button onClick={() => setLang('sk')} className={`text-xs font-bold tracking-[0.4em] uppercase transition-colors ${lang === 'sk' ? 'text-black dark:text-white' : 'text-black/30 dark:text-white/30'}`}>Slovenčina</button><button onClick={() => setLang('en')} className={`text-xs font-bold tracking-[0.4em] uppercase transition-colors ${lang === 'en' ? 'text-black dark:text-white' : 'text-black/30 dark:text-white/30'}`}>English</button></div></section>
       </div>
     </div>
   );
