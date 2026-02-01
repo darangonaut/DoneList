@@ -47,6 +47,17 @@ const getTagColor = (tag) => {
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 };
 
+const getLocalDateKey = (date = new Date()) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getYesterdayKey = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return getLocalDateKey(d);
+};
+
 function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(log.text);
@@ -99,10 +110,7 @@ function LogItem({ log, onDelete, onUpdate, onTagClick, lang, t }) {
         return (
           <span 
             key={i} 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              if (onTagClick) onTagClick(part); 
-            }}
+            onClick={(e) => { e.stopPropagation(); if (onTagClick) onTagClick(part); }}
             className="inline-block px-2 py-0.5 rounded-md text-[14px] font-bold mx-0.5 cursor-pointer active:scale-90 transition-transform relative z-20" 
             style={{ backgroundColor: `${color}20`, color: color }}
           >
@@ -144,9 +152,9 @@ function App() {
   const [hasMore, setHasMore] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
-  const [streak, setStreak] = useState(() => Number(localStorage.getItem('cached_streak')) || 0);
-  const [dailyStats, setDailyStats] = useState(() => JSON.parse(localStorage.getItem('cached_stats')) || {});
-  const [dailyTags, setDailyTags] = useState(() => JSON.parse(localStorage.getItem('cached_tags')) || {});
+  const [streak, setStreak] = useState(0);
+  const [dailyStats, setDailyStats] = useState({});
+  const [dailyTags, setDailyTags] = useState({});
   const [accentColor, setAccentColor] = useState(() => localStorage.getItem('cached_accent') || '#F97316');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
@@ -182,12 +190,19 @@ function App() {
         unsubStreak = onSnapshot(doc(db, 'userStats', u.uid), (s) => {
           if (s.exists()) {
             const data = s.data();
-            setStreak(data.streak || 0);
+            const today = getLocalDateKey();
+            const yesterday = getYesterdayKey();
+            const lastLogDate = data.lastDateKey || "";
+
+            // Streak je platný len ak bol posledný zápis dnes alebo včera
+            if (lastLogDate === today || lastLogDate === yesterday) {
+              setStreak(data.streak || 0);
+            } else {
+              setStreak(0);
+            }
+
             setDailyStats(data.dailyCounts || {});
             setDailyTags(data.dailyTags || {});
-            localStorage.setItem('cached_streak', data.streak || 0);
-            localStorage.setItem('cached_stats', JSON.stringify(data.dailyCounts || {}));
-            localStorage.setItem('cached_tags', JSON.stringify(data.dailyTags || {}));
           }
         });
       } else {
@@ -199,28 +214,13 @@ function App() {
 
   useEffect(() => {
     if (!user) return;
-    
-    // Použijeme základný query pre používateľa
-    const q = query(
-      collection(db, 'logs'), 
-      where('userId', '==', user.uid), 
-      limit(activeTagFilter ? 100 : limitCount) // Vo filtri načítame viac dát naraz
-    );
-
+    const q = query(collection(db, 'logs'), where('userId', '==', user.uid), limit(activeTagFilter ? 100 : limitCount));
     const unsub = onSnapshot(q, (sn) => {
       let d = sn.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Filtrovanie robíme na klientovi pre maximálnu stabilitu aj so staršími dátami
       if (activeTagFilter) {
-        d = d.filter(log => {
-          const textMatch = log.text?.toLowerCase().includes(activeTagFilter.toLowerCase());
-          const tagsMatch = log.tags?.includes(activeTagFilter);
-          return textMatch || tagsMatch;
-        });
+        d = d.filter(log => log.text?.toLowerCase().includes(activeTagFilter.toLowerCase()) || (log.tags && log.tags.includes(activeTagFilter)));
       }
-
       d = d.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      
       setLogs(d);
       setHasMore(sn.docs.length >= limitCount && !activeTagFilter);
       setLoading(false);
@@ -234,8 +234,7 @@ function App() {
     for (let i = 139; i >= 0; i--) {
       const d = new Date();
       d.setDate(today.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      
+      const key = getLocalDateKey(d);
       let dominantTagColor = null;
       const dayTags = dailyTags[key] || {};
       const tagEntries = Object.entries(dayTags);
@@ -243,12 +242,7 @@ function App() {
         const topTag = tagEntries.sort((a, b) => b[1] - a[1])[0][0];
         dominantTagColor = getTagColor(topTag);
       }
-
-      days.push({ 
-        key, 
-        count: dailyStats[key] || 0,
-        color: dominantTagColor
-      });
+      days.push({ key, count: dailyStats[key] || 0, color: dominantTagColor });
     }
     return days;
   }, [dailyStats, dailyTags]);
@@ -261,9 +255,6 @@ function App() {
   const handleLogout = () => {
     setIsSettingsOpen(false);
     signOut(auth);
-    localStorage.removeItem('cached_streak');
-    localStorage.removeItem('cached_stats');
-    localStorage.removeItem('cached_tags');
   };
 
   const addLog = async (e) => {
@@ -272,15 +263,13 @@ function App() {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     
     triggerHaptic('light');
-    const now = new Date();
-    const todayKey = now.toISOString().split('T')[0];
-    const todayTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    
+    const todayKey = getLocalDateKey();
+    const yesterdayKey = getYesterdayKey();
     const foundTags = inputText.match(/#\w+/g) || [];
-    const updatedDailyCounts = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
     
-    const updatedDailyTags = { ...dailyTags };
-    if (!updatedDailyTags[todayKey]) updatedDailyTags[todayKey] = {};
+    // 1. Optimistický update lokálneho stavu
+    const updatedDailyCounts = { ...dailyStats, [todayKey]: (dailyStats[todayKey] || 0) + 1 };
+    const updatedDailyTags = { ...dailyTags, [todayKey]: { ...(dailyTags[todayKey] || {}) } };
     foundTags.forEach(tag => {
       updatedDailyTags[todayKey][tag] = (updatedDailyTags[todayKey][tag] || 0) + 1;
     });
@@ -290,6 +279,30 @@ function App() {
     setIsInputExpanded(false);
 
     try {
+      // 2. Získanie aktuálneho streaku z Firestore pred zápisom
+      const sRef = doc(db, 'userStats', user.uid);
+      const sSnap = await getDoc(sRef);
+      
+      let currentStreak = 0;
+      let lastDateKey = "";
+
+      if (sSnap.exists()) {
+        currentStreak = sSnap.data().streak || 0;
+        lastDateKey = sSnap.data().lastDateKey || "";
+      }
+
+      let newStreak = currentStreak;
+      let isNewDay = false;
+
+      if (lastDateKey === yesterdayKey) {
+        newStreak = currentStreak + 1;
+        isNewDay = true;
+      } else if (lastDateKey !== todayKey) {
+        newStreak = 1;
+        isNewDay = true;
+      }
+
+      // 3. Zápis Logu
       await addDoc(collection(db, 'logs'), { 
         userId: user.uid, 
         text: inputText, 
@@ -297,17 +310,28 @@ function App() {
         timestamp: serverTimestamp() 
       });
 
-      const sRef = doc(db, 'userStats', user.uid);
+      // 4. Zápis Štatistík
       await setDoc(sRef, { 
         dailyCounts: updatedDailyCounts,
         dailyTags: updatedDailyTags,
-        lastDate: serverTimestamp()
+        lastDateKey: todayKey,
+        streak: newStreak,
+        lastUpdate: serverTimestamp()
       }, { merge: true });
 
+      // Okamžitý vizuálny efekt
+      if (isNewDay && [7, 30, 100].includes(newStreak)) {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        setFeedback(`WAAAU! ${newStreak} dňová séria! 🏆`);
+      } else {
+        setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]);
+      }
+
       setInputText('');
-      setFeedback(t.motivations[Math.floor(Math.random() * t.motivations.length)]);
       setTimeout(() => setFeedback(''), 4000);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Critical Streak Error:", e);
+    }
   };
 
   const toggleTagFilter = (tag) => {
@@ -315,14 +339,23 @@ function App() {
     setActiveTagFilter(prev => prev === tag ? null : tag);
   };
 
+  useEffect(() => {
+    if (isInputExpanded && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInputExpanded]);
+
   if (loading && !user) return <div className="min-h-screen bg-apple-bg"></div>;
 
   if (!user) return (
     <div className="min-h-screen bg-black text-white selection:bg-[var(--accent-color)]/30 overflow-y-auto scroll-smooth">
-      <div className="fixed inset-0 z-0 opacity-40 text-center flex items-center justify-center p-6">
-        <h1 className="text-7xl font-black mb-12 tracking-tighter">{t.title}</h1>
+      <div className="fixed inset-0 z-0 opacity-40">
+        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], x: [-100, 100, -100], y: [-50, 50, -50] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full bg-orange-600 blur-[120px]" />
+        <motion.div animate={{ scale: [1.2, 1, 1.2], rotate: [0, -120, 0], x: [100, -100, 100], y: [50, -50, 50] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] rounded-full bg-blue-600 blur-[120px]" />
+        <motion.div animate={{ scale: [1, 1.3, 1], x: [0, 50, 0], y: [0, 100, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-purple-600 blur-[100px]" />
       </div>
       <div className="relative z-10 w-full max-w-2xl mx-auto px-6 py-20 text-center flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-7xl md:text-9xl font-black mb-8 tracking-tighter bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">{t.title}</h1>
         <button onClick={handleLogin} className="bg-white text-black py-5 px-10 rounded-full font-bold text-xl active:scale-95 transition-all shadow-2xl">{t.login}</button>
       </div>
     </div>
@@ -337,7 +370,6 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <header className="px-6 pt-12 pb-6 sticky top-0 bg-apple-bg/80 backdrop-blur-md z-30 border-b border-apple-border/50">
         <div className="max-w-xl mx-auto">
           <div className="flex justify-between items-end mb-8">
@@ -346,51 +378,22 @@ function App() {
                 <p className="text-xs font-semibold text-apple-secondary uppercase tracking-widest">{new Date().toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long' })}</p>
                 <AnimatePresence mode="wait">{streak > 0 && (<motion.span key={streak} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1 text-sm font-bold bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-0.5 rounded-full border border-[var(--accent-color)]/20 shadow-sm">🔥 {streak}</motion.span>)}</AnimatePresence>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight">
-                {activeTagFilter ? (
-                  <span className="flex items-center gap-2">
-                    Focus: <span style={{ color: getTagColor(activeTagFilter) }}>{activeTagFilter}</span>
-                  </span>
-                ) : t.title}
-              </h1>
+              <h1 className="text-4xl font-bold tracking-tight">{activeTagFilter ? <span className="flex items-center gap-2">Focus: <span style={{ color: getTagColor(activeTagFilter) }}>{activeTagFilter}</span></span> : t.title}</h1>
             </motion.div>
-            <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">
-              {user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}
-            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">{user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}</button>
           </div>
-
           <div className="flex flex-wrap gap-[4px] justify-center overflow-x-auto pb-4 px-2">
             {heatmapData.map((day) => {
               const intensity = Math.min(day.count, 4);
               const opacity = intensity === 0 ? 0.1 : 0.25 + (intensity * 0.18);
               const isFilteredTag = activeTagFilter && day.color === getTagColor(activeTagFilter);
               const bgColor = day.color && intensity > 0 ? day.color : (intensity > 0 ? 'var(--accent-color)' : 'currentColor');
-              
-              return (
-                <div 
-                  key={day.key} 
-                  className={`w-[11px] h-[11px] rounded-[2.5px] shrink-0 transition-all duration-700 ${activeTagFilter && !isFilteredTag ? 'grayscale opacity-5' : ''}`} 
-                  style={{ backgroundColor: bgColor, opacity: activeTagFilter && !isFilteredTag ? 0.05 : opacity }} 
-                />
-              );
+              return <div key={day.key} className={`w-[11px] h-[11px] rounded-[2.5px] shrink-0 transition-all duration-700 ${activeTagFilter && !isFilteredTag ? 'grayscale opacity-5' : ''}`} style={{ backgroundColor: bgColor, opacity: activeTagFilter && !isFilteredTag ? 0.05 : opacity }} />;
             })}
           </div>
-
-          <AnimatePresence>
-            {activeTagFilter && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="flex justify-center mt-4">
-                <button 
-                  onClick={() => setActiveTagFilter(null)}
-                  className="text-xs font-bold bg-apple-card border border-apple-border px-4 py-1.5 rounded-full shadow-sm text-apple-secondary active:scale-95 transition-all"
-                >
-                  ✕ Zrušiť filter
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <AnimatePresence>{activeTagFilter && (<motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="flex justify-center mt-4"><button onClick={() => setActiveTagFilter(null)} className="text-xs font-bold bg-apple-card border border-apple-border px-4 py-1.5 rounded-full shadow-sm text-apple-secondary active:scale-95 transition-all">✕ Zrušiť filter</button></motion.div>)}</AnimatePresence>
         </div>
       </header>
-
       <main className="max-w-xl mx-auto px-6 mt-6 overflow-x-hidden">
         <motion.div layout className="space-y-0">
           <AnimatePresence mode="popLayout">
@@ -400,59 +403,27 @@ function App() {
               </motion.div>
             ))}
           </AnimatePresence>
-          {logs.length === 0 && !loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium italic">
-              {activeTagFilter ? `Nenašiel som žiadne záznamy s ${activeTagFilter}` : t.noLogs}
-            </motion.div>
-          )}
+          {logs.length === 0 && !loading && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-apple-secondary font-medium italic">{activeTagFilter ? `Nenašiel som žiadne záznamy s ${activeTagFilter}` : t.noLogs}</motion.div>}
         </motion.div>
+        {hasMore && logs.length > 0 && !activeTagFilter && <div className="flex justify-center mt-6"><button onClick={() => setLimitCount(prev => prev + 20)} className="text-sm font-semibold text-apple-secondary active:opacity-50">{t.loadMore}</button></div>}
       </main>
-
       <div className="fixed inset-0 flex items-center justify-center z-[120] pointer-events-none">
         <AnimatePresence>
           {!isInputExpanded ? (
-            <motion.button
-              key="fab"
-              layoutId="fab-container"
-              onClick={() => { triggerHaptic('light'); setIsInputExpanded(true); }}
-              style={{ backgroundColor: accentColor, bottom: '2.5rem', position: 'fixed', borderRadius: '100px' }}
-              className="w-16 h-16 shadow-[0_15px_30px_rgba(0,0,0,0.2)] flex items-center justify-center text-white text-4xl pointer-events-auto"
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            >
-              +
-            </motion.button>
+            <motion.button key="fab" layoutId="fab-container" onClick={() => { triggerHaptic('light'); setIsInputExpanded(true); }} style={{ backgroundColor: accentColor, bottom: '2.5rem', position: 'fixed', borderRadius: '100px' }} className="w-16 h-16 shadow-[0_15px_30px_rgba(0,0,0,0.2)] flex items-center justify-center text-white text-4xl pointer-events-auto" transition={{ type: 'spring', damping: 25, stiffness: 200 }}>+</motion.button>
           ) : (
-            <motion.div
-              key="expanded"
-              layoutId="fab-container"
-              className="fixed inset-0 bg-apple-bg flex flex-col items-center justify-center p-8 pointer-events-auto"
-              style={{ borderRadius: '0px' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            >
+            <motion.div key="expanded" layoutId="fab-container" className="fixed inset-0 bg-apple-bg flex flex-col items-center justify-center p-8 pointer-events-auto" style={{ borderRadius: '0px' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}>
               <div className="w-full max-w-lg relative">
                 <button onClick={() => setIsInputExpanded(false)} className="absolute -top-32 right-0 text-apple-secondary font-bold text-lg p-4 active:opacity-50">{t.back}</button>
                 <form onSubmit={addLog} className="w-full space-y-8">
-                  <textarea
-                    ref={inputRef}
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder={t.placeholder}
-                    className="w-full bg-transparent border-none text-3xl md:text-4xl font-bold text-apple-text placeholder:text-apple-secondary/30 focus:ring-0 outline-none resize-none min-h-[200px]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addLog(); }
-                      if (e.key === 'Escape') setIsInputExpanded(false);
-                    }}
-                  />
-                  <button type="submit" style={{ backgroundColor: accentColor }} className="w-full py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl active:scale-95 transition-all">
-                    {lang === 'sk' ? 'Uložiť víťazstvo' : 'Save Victory'}
-                  </button>
+                  <textarea ref={inputRef} value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={t.placeholder} className="w-full bg-transparent border-none text-3xl md:text-4xl font-bold text-apple-text placeholder:text-apple-secondary/30 focus:ring-0 outline-none resize-none min-h-[200px]" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addLog(); } if (e.key === 'Escape') setIsInputExpanded(false); }} />
+                  <button type="submit" style={{ backgroundColor: accentColor }} className="w-full py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl active:scale-95 transition-all">{lang === 'sk' ? 'Uložiť víťazstvo' : 'Save Victory'}</button>
                 </form>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
       {isSettingsOpen && (
         <AnimatePresence>
           <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-0 bg-apple-bg z-[150] px-6 pt-12 overflow-y-auto pb-20">
