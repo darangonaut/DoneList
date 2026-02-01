@@ -81,7 +81,7 @@ function App() {
   const [dailyStats, setDailyStats] = useState(() => JSON.parse(localStorage.getItem('cached_stats')) || {});
   const [dailyTags, setDailyTags] = useState(() => JSON.parse(localStorage.getItem('cached_tags')) || {});
   
-  // Settings States - initialized from localStorage for immediate feel
+  // Settings States
   const [accentColor, setAccentColor] = useState(() => localStorage.getItem('cached_accent') || '#F97316');
   const [showStreak, setShowStreak] = useState(() => localStorage.getItem('show_streak') !== 'false');
   const [showHeatmap, setShowHeatmap] = useState(() => localStorage.getItem('show_heatmap') !== 'false');
@@ -93,6 +93,7 @@ function App() {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [reflectionType, setReflectionType] = useState(null); 
   const [sharingLog, setSharingLog] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Protection flag
   const inputRef = useRef(null);
 
   const t = translations[lang] || translations.sk;
@@ -144,18 +145,15 @@ function App() {
   const handleLogout = () => { 
     setIsSettingsOpen(false); 
     signOut(auth); 
-    // Do NOT clear everything, keep visual preferences
+    // We keep visual settings but clear user data
     localStorage.removeItem('cached_stats');
     localStorage.removeItem('cached_tags');
-    localStorage.removeItem('show_streak');
-    localStorage.removeItem('show_heatmap');
-    localStorage.removeItem('haptic_enabled');
-    localStorage.removeItem('daily_goal');
   };
 
   const exportData = () => {
     const data = {
       user: { name: user.displayName, email: user.email },
+      settings: { accentColor, dailyGoal, showStreak, showHeatmap, hapticEnabled },
       stats: dailyStats,
       tags: dailyTags,
       logs: logs.map(l => ({ text: l.text, date: l.timestamp?.toDate(), special: { daily: l.isTopWin, weekly: l.isWeeklyTop, monthly: l.isMonthlyTop } }))
@@ -187,20 +185,20 @@ function App() {
 
   useEffect(() => { getRedirectResult(auth).catch((e) => console.error("Redirect Error", e)); }, []);
   
-  // Apply visual settings immediately
+  // Apply visual settings immediately to local
   useEffect(() => { 
     localStorage.setItem('lang', lang); 
     localStorage.setItem('cached_accent', accentColor); 
+    localStorage.setItem('show_streak', showStreak);
+    localStorage.setItem('show_heatmap', showHeatmap);
+    localStorage.setItem('haptic_enabled', hapticEnabled);
+    localStorage.setItem('daily_goal', dailyGoal);
     document.documentElement.style.setProperty('--accent-color', accentColor); 
-  }, [accentColor, lang]);
+  }, [accentColor, lang, showStreak, showHeatmap, hapticEnabled, dailyGoal]);
 
-  // Sync settings to server ONLY when user is logged in
+  // Sync settings to server ONLY when user is logged in AND initial load from server is done
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('show_streak', showStreak);
-      localStorage.setItem('show_heatmap', showHeatmap);
-      localStorage.setItem('haptic_enabled', hapticEnabled);
-      localStorage.setItem('daily_goal', dailyGoal);
+    if (user && !isInitialLoad) {
       setDoc(doc(db, 'userStats', user.uid), { 
         showStreak, 
         showHeatmap, 
@@ -209,7 +207,7 @@ function App() {
         accentColor 
       }, { merge: true });
     }
-  }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, user]);
+  }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, user, isInitialLoad]);
 
   useEffect(() => {
     let unsubStats = () => {};
@@ -220,7 +218,7 @@ function App() {
         unsubStats = onSnapshot(sRef, async (s) => {
           if (s.exists()) {
             const data = s.data();
-            // Server data has priority
+            // Server data has priority during initial load
             if (data.showStreak !== undefined) setShowStreak(data.showStreak);
             if (data.showHeatmap !== undefined) setShowHeatmap(data.showHeatmap);
             if (data.hapticEnabled !== undefined) setHapticEnabled(data.hapticEnabled);
@@ -241,9 +239,11 @@ function App() {
               accentColor: '#F97316'
             }, { merge: true }); 
           }
+          setIsInitialLoad(false); // After first snapshot, we can allow syncing back to server
           setLoading(false);
         });
       } else { 
+        setIsInitialLoad(false);
         setLoading(false); 
       }
     });
