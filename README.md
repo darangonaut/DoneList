@@ -20,20 +20,21 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 
 ## ✨ Key Features
 
-- **Activity Heatmap:** A GitHub-style year-long visualization of your consistency, glowing with your chosen accent color.
-- **Inline Editing:** Tap any victory to edit it instantly—native feel with smooth transitions.
-- **Smart History:** Timestamps automatically adapt—today shows time, yesterday is labeled, and older entries show full dates.
-- **Dynamic Themes:** Choose from Apple-inspired accent colors that tint the entire UI, including backgrounds and status bars.
-- **iOS Swipe-to-Delete:** Native feel when removing items—swipe left to reveal a delete action, just like on iOS.
-- **Streaks 🔥 & Milestones:** Track your daily consistency with celebratory confetti bursts at key milestones (7, 30, 100 days).
-- **Haptic Feedback:** Subtle vibrations on interaction for a physical, tactile device feel.
-- **PWA Optimized:** Specially tuned for iPhone "Add to Home Screen" mode, including a dedicated login flow.
+- **Hierarchical Reflections:** Daily, weekly, and monthly rituals to crown your best moments—from **🌟 Daily Stars** to **💎 Weekly Jewels** and **🏆 Monthly Trophies**.
+- **Victory Cards 📸:** Generate beautiful, minimalist images of your top wins with one click, ready to be shared on Instagram Stories or saved to your gallery.
+- **Smart Tags & Focus Mode:** Categorize your wins with `#tags`. Tap any tag to filter your entire history and see category-specific progress in the heatmap.
+- **Immersive Writing Mode:** A dramatic full-screen transformation from a floating [+] button into a clean, focused writing space.
+- **Activity Heatmap:** A GitHub-style year-long visualization of your consistency, automatically tinted by your dominant category of the day.
+- **Adaptive Aesthetics:** Full support for System Light/Dark modes across the entire app, including an animated storytelling landing page with scientific charts.
+- **Minimalist Constraints:** A 280-character limit with a visual counter keeps your entries concise, powerful, and easy to review.
+- **iOS Native Feel:** Swipe-to-delete gestures, haptic feedback, and a PWA setup optimized for the "Add to Home Screen" experience.
 
 ## 🛠 Tech Stack
 
 - **Frontend:** [React](https://reactjs.org/) + [Framer Motion](https://www.framer.com/motion/)
+- **Image Generation:** [html-to-image](https://www.npmjs.com/package/html-to-image)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Backend:** [Firebase](https://firebase.google.com/) (Auth, Firestore, Hosting)
+- **Backend:** [Firebase](https://firebase.google.com/) (Auth, Firestore with Security Rules, Hosting)
 - **Visuals:** [Canvas Confetti](https://www.npmjs.com/package/canvas-confetti) for celebrations
 
 ## 🚀 Quick Start (Local Dev)
@@ -56,9 +57,12 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 
 ## 📋 Roadmap
 
-- [ ] Smart Categories (#work, #health, #personal) with color tagging.
-- [ ] Shareable "Victory Cards" optimized for Instagram Stories.
+- [x] Smart Categories (#work, #health, #personal) with color tagging.
+- [x] Shareable "Victory Cards" optimized for Instagram Stories.
+- [x] Hierarchical reflections (Day/Week/Month).
 - [ ] Voice-to-text logging (Siri-style input).
+- [ ] AI Weekly Summary (using LLM to analyze your progress and mood).
+- [ ] Push Notifications for evening reminders.
 
 ---
 Created to celebrate every step of progress. *Done is better than perfect.*
