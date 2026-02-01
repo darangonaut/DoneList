@@ -58,7 +58,15 @@ export const translations = {
     saveImage: "Uložiť obrázok",
     dailyWin: "Úspech dňa",
     weeklyWin: "Klenot týždňa",
-    monthlyWin: "Trofej mesiaca"
+    monthlyWin: "Trofej mesiaca",
+    dataManagement: "Správa dát",
+    exportData: "Exportovať úspechy (JSON)",
+    deleteAllData: "Vymazať celú históriu",
+    deleteWarning: "Pozor! Táto akcia je nevratná a vymaže všetky tvoje zápisy a štatistiky.",
+    dailyGoal: "Denný cieľ",
+    goalLabel: "Počet úspechov za deň",
+    goalReached: "Cieľ splnený! Si úžasný. 🎯",
+    goalProgress: "Dnes: {count} z {goal} víťazstiev"
   },
   en: {
     tagline: "Overcome achievement amnesia",
@@ -119,6 +127,14 @@ export const translations = {
     saveImage: "Save Image",
     dailyWin: "Daily Win",
     weeklyWin: "Weekly Jewel",
-    monthlyWin: "Monthly Trophy"
+    monthlyWin: "Monthly Trophy",
+    dataManagement: "Data Management",
+    exportData: "Export Achievements (JSON)",
+    deleteAllData: "Delete All History",
+    deleteWarning: "Warning! This action is irreversible and will delete all your entries and stats.",
+    dailyGoal: "Daily Goal",
+    goalLabel: "Number of wins per day",
+    goalReached: "Goal reached! You're awesome. 🎯",
+    goalProgress: "Today: {count} of {goal} wins"
   }
 };

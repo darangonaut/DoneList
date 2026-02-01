@@ -10,11 +10,20 @@ export function Dashboard({
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
   setIsSettingsOpen, setReflectionType, handleDelete, updateDoc, db, doc,
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
-  accentColor, triggerHaptic, hasMore, setLimitCount, onShare
+  accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
+  showStreak, showHeatmap, dailyGoal
 }) {
   const remainingChars = MAX_LENGTH - inputText.length;
   const isCloseToLimit = remainingChars <= 20;
   const isOverLimit = remainingChars < 0;
+
+  const todayCount = logs.filter(log => {
+    if (!log.timestamp) return false;
+    const date = new Date(log.timestamp.seconds * 1000);
+    return date.toDateString() === new Date().toDateString();
+  }).length;
+
+  const isGoalReached = todayCount >= dailyGoal;
 
   return (
     <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
@@ -25,9 +34,18 @@ export function Dashboard({
               <p className="text-xs font-semibold text-apple-secondary uppercase tracking-widest">
                 {new Date().toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long' })}
               </p>
+              
               <AnimatePresence mode="wait">
-                {streak > 0 && (
-                  <motion.span key={streak} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1 text-sm font-bold bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-0.5 rounded-full border border-[var(--accent-color)]/20 shadow-sm">🔥 {streak}</motion.span>
+                {showStreak && streak > 0 && (
+                  <motion.span 
+                    key={streak} 
+                    initial={{ scale: 0.5, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }} 
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    className="flex items-center gap-1 text-sm font-bold bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-0.5 rounded-full border border-[var(--accent-color)]/20 shadow-sm"
+                  >
+                    🔥 {streak}
+                  </motion.span>
                 )}
               </AnimatePresence>
               
@@ -42,21 +60,34 @@ export function Dashboard({
             <h1 className="text-4xl font-bold tracking-tight text-apple-text text-left">
               {activeTagFilter ? <span className="flex items-center gap-2">Focus: <span style={{ color: getTagColor(activeTagFilter) }}>{activeTagFilter}</span></span> : t.title}
             </h1>
+            {/* Goal Progress */}
+            {!activeTagFilter && (
+              <p className={`text-[13px] font-medium mt-1 transition-colors duration-500 ${isGoalReached ? 'text-green-500' : 'text-apple-secondary'}`}>
+                {isGoalReached ? t.goalReached : t.goalProgress.replace('{count}', todayCount).replace('{goal}', dailyGoal)}
+              </p>
+            )}
           </motion.div>
           <button onClick={() => setIsSettingsOpen(true)} className="active:scale-90 transition-transform">
             {user?.photoURL ? <img src={user.photoURL} alt="P" className="w-10 h-10 rounded-full border border-apple-border shadow-sm" /> : <div className="w-10 h-10 rounded-full bg-apple-card border border-apple-border flex items-center justify-center">👤</div>}
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-[4px] justify-center overflow-x-auto pb-4 px-2">
-          {heatmapData && heatmapData.map((day) => {
-            const intensity = Math.min(day.count, 4);
-            const opacity = intensity === 0 ? 0.1 : 0.25 + (intensity * 0.18);
-            const isFilteredTag = activeTagFilter && day.color === getTagColor(activeTagFilter);
-            const bgColor = day.color && intensity > 0 ? day.color : (intensity > 0 ? 'var(--accent-color)' : 'currentColor');
-            return <div key={day.key} className={`w-[11px] h-[11px] rounded-[2.5px] shrink-0 transition-all duration-700 ${activeTagFilter && !isFilteredTag ? 'grayscale opacity-5' : ''}`} style={{ backgroundColor: bgColor, opacity: activeTagFilter && !isFilteredTag ? 0.05 : opacity }} />;
-          })}
-        </div>
+        {showHeatmap && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }} 
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="flex flex-wrap gap-[4px] justify-center overflow-x-auto pb-4 px-2"
+          >
+            {heatmapData && heatmapData.map((day) => {
+              const intensity = Math.min(day.count, 4);
+              const opacity = intensity === 0 ? 0.1 : 0.25 + (intensity * 0.18);
+              const isFilteredTag = activeTagFilter && day.color === getTagColor(activeTagFilter);
+              const bgColor = day.color && intensity > 0 ? day.color : (intensity > 0 ? 'var(--accent-color)' : 'currentColor');
+              return <div key={day.key} className={`w-[11px] h-[11px] rounded-[2.5px] shrink-0 transition-all duration-700 ${activeTagFilter && !isFilteredTag ? 'grayscale opacity-5' : ''}`} style={{ backgroundColor: bgColor, opacity: activeTagFilter && !isFilteredTag ? 0.05 : opacity }} />;
+            })}
+          </motion.div>
+        )}
 
         <AnimatePresence>
           {activeTagFilter && (
