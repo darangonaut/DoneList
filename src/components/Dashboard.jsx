@@ -161,6 +161,7 @@ export function Dashboard({
                       lang={lang} 
                       t={t}
                       getTagColor={getTagColor}
+                      triggerHaptic={triggerHaptic}
                       formatTimestamp={(ts) => {
                         if (!ts) return '';
                         const date = new Date(ts.seconds * 1000);
@@ -218,6 +219,7 @@ export function Dashboard({
                             lang={lang} 
                             t={t}
                             getTagColor={getTagColor}
+                            triggerHaptic={triggerHaptic}
                             formatTimestamp={(ts) => {
                                 const date = new Date(ts.seconds * 1000);
                                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
