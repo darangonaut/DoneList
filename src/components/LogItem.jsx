@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 
 export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t, isSelectable = false, onSelect, getTagColor, formatTimestamp }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -27,6 +27,14 @@ export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t,
     if (e.key === 'Escape') {
       setEditText(log.text);
       setIsEditing(false);
+    }
+  };
+
+  const handleDragEnd = (event, info) => {
+    if (info.offset.x > -40) {
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+    } else {
+      animate(x, -80, { type: "spring", stiffness: 400, damping: 25 });
     }
   };
 
@@ -68,6 +76,8 @@ export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t,
         drag={isEditing || isSelectable ? false : "x"} 
         dragConstraints={{ left: -80, right: 0 }} 
         dragElastic={0.1} 
+        dragDirectionLock={true}
+        onDragEnd={handleDragEnd}
         style={{ x }} 
         onClick={() => isSelectable && onSelect(log.id)}
         className={`bg-apple-card/80 backdrop-blur-xl p-4 border flex justify-between items-center relative z-10 rounded-2xl touch-pan-y 

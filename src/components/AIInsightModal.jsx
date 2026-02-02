@@ -25,7 +25,13 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
       lastWeek.setDate(lastWeek.getDate() - 7);
       const recentLogs = logs
         .filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) > lastWeek)
-        .map(l => `- ${l.text} (${l.tags?.join(', ') || ''})`)
+        .map(l => {
+          let prefix = '';
+          if (l.isMonthlyTop) prefix = '[MONTHLY TOP 🏆] ';
+          else if (l.isWeeklyTop) prefix = '[WEEKLY TOP 💎] ';
+          else if (l.isTopWin) prefix = '[DAILY TOP 🌟] ';
+          return `- ${prefix}${l.text} (${l.tags?.join(', ') || ''})`;
+        })
         .join('\n');
 
       if (!recentLogs) {
@@ -34,7 +40,11 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
         return;
       }
 
-      const prompt = `${t.aiPrompt}\n\nLogs:\n${recentLogs}`;
+      const additionalInstruction = lang === 'sk' 
+        ? "\n\nDôležité: Ak vidíš záznamy označené ako 'TOP', venuj im špeciálnu pozornosť a určite ich spomeň v analýze, pretože sú pre mňa najvýznamnejšie." 
+        : "\n\nImportant: If you see entries marked as 'TOP', pay special attention to them and definitely mention them in your analysis, as they are the most significant to me.";
+
+      const prompt = `${t.aiPrompt}${additionalInstruction}\n\nLogs:\n${recentLogs}`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -71,7 +81,7 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="w-full max-w-lg bg-apple-card border border-apple-border rounded-[2.5rem] p-8 shadow-2xl relative z-10 overflow-hidden"
+            className="w-full max-w-lg bg-apple-card border border-apple-border rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden max-h-[85vh] flex flex-col"
           >
             {/* Animated Background Pulse */}
             {loading && (
@@ -86,15 +96,15 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
               />
             )}
 
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="relative z-10 flex flex-col h-full max-h-full p-8 min-h-0">
+              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
                 <span className="text-3xl">🔮</span>
                 <h2 className="text-2xl font-bold text-apple-text">{t.aiMotivator}</h2>
               </div>
 
-              <div className="min-h-[150px] flex flex-col justify-center">
+              <div className="min-h-[150px] flex flex-col flex-grow overflow-y-auto custom-scrollbar pr-2">
                 {loading ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 my-auto">
                     <p className="text-apple-secondary italic animate-pulse">{t.aiLoading}</p>
                     <div className="h-2 w-full bg-apple-border rounded-full overflow-hidden">
                       <motion.div 
@@ -107,7 +117,7 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
                     </div>
                   </div>
                 ) : error ? (
-                  <div className="text-center">
+                  <div className="text-center my-auto">
                     <p className="text-red-500 font-medium mb-2">{t.aiError}</p>
                     <p className="text-xs text-red-400 opacity-80">{error}</p>
                   </div>
@@ -125,7 +135,7 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
               <button 
                 onClick={onClose}
                 style={{ backgroundColor: accentColor }}
-                className="w-full mt-8 py-4 rounded-2xl text-white font-bold shadow-lg active:scale-95 transition-all"
+                className="w-full mt-8 py-4 rounded-2xl text-white font-bold shadow-lg active:scale-95 transition-all flex-shrink-0"
               >
                 {t.aiClose}
               </button>
