@@ -7,13 +7,13 @@ export function BackgroundBlobs({ accentColor }) {
       <motion.div 
         animate={{ scale: [1, 1.2, 1], x: [-50, 50, -50], y: [-20, 20, -20] }} 
         transition={{ duration: 15, repeat: Infinity, ease: "linear" }} 
-        className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full blur-[100px]" 
+        className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] will-change-transform translate-z-0" 
         style={{ backgroundColor: accentColor }} 
       />
       <motion.div 
         animate={{ scale: [1.2, 1, 1.2], x: [50, -50, 50], y: [20, -20, 20] }} 
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }} 
-        className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[100px]" 
+        className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[100px] will-change-transform translate-z-0" 
         style={{ backgroundColor: accentColor }} 
       />
     </div>

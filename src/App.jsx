@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { auth, googleProvider, db } from './firebase';
 import { 
   signInWithRedirect, 
@@ -30,10 +30,21 @@ import confetti from 'canvas-confetti';
 import { BackgroundBlobs } from './components/BackgroundBlobs';
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
-import { SettingsModal } from './components/SettingsModal';
-import { ReflectionModal } from './components/ReflectionModal';
-import { VictoryCard } from './components/VictoryCard';
-import { AIInsightModal } from './components/AIInsightModal';
+
+// Lazy Loaded Components
+const SettingsModal = React.lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const ReflectionModal = React.lazy(() => import('./components/ReflectionModal').then(module => ({ default: module.ReflectionModal })));
+const VictoryCard = React.lazy(() => import('./components/VictoryCard').then(module => ({ default: module.VictoryCard })));
+const AIInsightModal = React.lazy(() => import('./components/AIInsightModal').then(module => ({ default: module.AIInsightModal })));
+
+const ModalLoading = () => (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-apple-bg/20 backdrop-blur-sm">
+    <div className="bg-apple-card/80 backdrop-blur-xl border border-apple-border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+      <div className="w-2 h-2 rounded-full bg-[var(--accent-color)] animate-ping" />
+      <span className="text-sm font-semibold text-apple-text tracking-wide">Načítavam...</span>
+    </div>
+  </div>
+);
 
 const getLocalDateKey = (date = new Date()) => {
   const d = new Date(date);
@@ -329,7 +340,29 @@ function App() {
     return days;
   }, [dailyStats, dailyTags]);
 
-  if (loading && !user) return <div className="min-h-screen bg-apple-bg transition-colors duration-500"></div>;
+  if (loading && !user) {
+    return (
+      <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center transition-colors duration-500">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold">
+            D
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <h2 className="text-xl font-bold text-apple-text tracking-tight">DoneList</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)] animate-bounce [animation-delay:-0.3s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)] animate-bounce [animation-delay:-0.15s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)] animate-bounce" />
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-apple-bg transition-colors duration-500 selection:bg-[var(--accent-color)] selection:text-white relative">
@@ -356,42 +389,44 @@ function App() {
             showStreak={showStreak} showHeatmap={showHeatmap} dailyGoal={dailyGoal}
           />
 
-          <SettingsModal 
-            isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
-            user={user} t={t} lang={lang} setLang={setLang}
-            accentColor={accentColor} setAccentColor={setAccentColor}
-            handleLogout={handleLogout}
-            showStreak={showStreak} setShowStreak={setShowStreak}
-            showHeatmap={showHeatmap} setShowHeatmap={setShowHeatmap}
-            hapticEnabled={hapticEnabled} setHapticEnabled={setHapticEnabled}
-            dailyGoal={dailyGoal} setDailyGoal={setDailyGoal}
-            exportData={exportData} deleteAllData={deleteAllData}
-          />
+          <Suspense fallback={<ModalLoading />}>
+            <SettingsModal 
+              isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
+              user={user} t={t} lang={lang} setLang={setLang}
+              accentColor={accentColor} setAccentColor={setAccentColor}
+              handleLogout={handleLogout}
+              showStreak={showStreak} setShowStreak={setShowStreak}
+              showHeatmap={showHeatmap} setShowHeatmap={setShowHeatmap}
+              hapticEnabled={hapticEnabled} setHapticEnabled={setHapticEnabled}
+              dailyGoal={dailyGoal} setDailyGoal={setDailyGoal}
+              exportData={exportData} deleteAllData={deleteAllData}
+            />
 
-          <ReflectionModal 
-            isOpen={!!reflectionType} type={reflectionType}
-            candidates={candidates} onSelect={selectTopWin}
-            onClose={() => setReflectionType(null)} t={t} lang={lang}
-            getTagColor={getTagColor}
-            formatTimestamp={(ts) => {
-              if (!ts) return '';
-              const date = new Date(ts.seconds * 1000);
-              return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }}
-          />
+            <ReflectionModal 
+              isOpen={!!reflectionType} type={reflectionType}
+              candidates={candidates} onSelect={selectTopWin}
+              onClose={() => setReflectionType(null)} t={t} lang={lang}
+              getTagColor={getTagColor}
+              formatTimestamp={(ts) => {
+                if (!ts) return '';
+                const date = new Date(ts.seconds * 1000);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              }}
+            />
 
-          <VictoryCard 
-            isOpen={!!sharingLog} log={sharingLog} 
-            onClose={() => setSharingLog(null)} t={t} 
-            accentColor={accentColor} 
-          />
+            <VictoryCard 
+              isOpen={!!sharingLog} log={sharingLog} 
+              onClose={() => setSharingLog(null)} t={t} 
+              accentColor={accentColor} 
+            />
 
-          <AIInsightModal 
-            isOpen={isAIModalOpen} 
-            onClose={() => setIsAIModalOpen(false)}
-            logs={logs} t={t} lang={lang} 
-            accentColor={accentColor}
-          />
+            <AIInsightModal 
+              isOpen={isAIModalOpen} 
+              onClose={() => setIsAIModalOpen(false)}
+              logs={logs} t={t} lang={lang} 
+              accentColor={accentColor}
+            />
+          </Suspense>
         </div>
       )}
       
