@@ -4,7 +4,10 @@ import {
   signInWithRedirect, 
   getRedirectResult, 
   onAuthStateChanged, 
-  signOut 
+  signOut,
+  setPersistence,
+  indexedDBLocalPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import { 
   collection, 
@@ -107,6 +110,7 @@ function App() {
   const [reflectionType, setReflectionType] = useState(null); 
   const [sharingLog, setSharingLog] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Protection flag
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const inputRef = useRef(null);
 
   const t = translations[lang] || translations.sk;
@@ -153,7 +157,18 @@ function App() {
     window.navigator.vibrate(patterns[type] || 10);
   };
 
-  const handleLogin = () => { setLoading(true); signInWithRedirect(auth, googleProvider); };
+  const handleLogin = async () => { 
+    setLoading(true); 
+    try {
+      await setPersistence(auth, indexedDBLocalPersistence);
+      await signInWithRedirect(auth, googleProvider);
+    } catch (e) {
+      console.error("Login Error", e);
+      setFeedback("Prihlásenie zlyhalo. Skús to znova.");
+      setLoading(false);
+      setTimeout(() => setFeedback(''), 4000);
+    }
+  };
   
   const handleLogout = () => { 
     setIsSettingsOpen(false); 
@@ -196,9 +211,6 @@ function App() {
     setLoading(false);
   };
 
-  useEffect(() => { getRedirectResult(auth).catch((e) => console.error("Redirect Error", e)); }, []);
-  
-  // Apply visual settings immediately to local
   useEffect(() => { 
     localStorage.setItem('lang', lang); 
     localStorage.setItem('cached_accent', accentColor); 
@@ -223,44 +235,74 @@ function App() {
   }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, user, isInitialLoad]);
 
   useEffect(() => {
+    const handleUpdateAvailable = () => setUpdateAvailable(true);
+    window.addEventListener('pwa-update-available', handleUpdateAvailable);
+    return () => window.removeEventListener('pwa-update-available', handleUpdateAvailable);
+  }, []);
+
+  // Robust Auth Handling for PWA Redirects
+  useEffect(() => {
     let unsubStats = () => {};
-    const unsubAuth = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const sRef = doc(db, 'userStats', u.uid);
-        unsubStats = onSnapshot(sRef, async (s) => {
-          if (s.exists()) {
-            const data = s.data();
-            // Server data has priority during initial load
-            if (data.showStreak !== undefined) setShowStreak(data.showStreak);
-            if (data.showHeatmap !== undefined) setShowHeatmap(data.showHeatmap);
-            if (data.hapticEnabled !== undefined) setHapticEnabled(data.hapticEnabled);
-            if (data.dailyGoal !== undefined) setDailyGoal(data.dailyGoal);
-            if (data.accentColor !== undefined) setAccentColor(data.accentColor);
-            
-            setDailyStats(data.dailyCounts || {});
-            setDailyTags(data.dailyTags || {});
-          } else { 
-            await setDoc(sRef, { 
-              dailyCounts: {}, 
-              dailyTags: {}, 
-              streak: 0, 
-              showStreak: true, 
-              showHeatmap: true, 
-              hapticEnabled: true, 
-              dailyGoal: 3,
-              accentColor: '#F97316'
-            }, { merge: true }); 
-          }
-          setIsInitialLoad(false); // After first snapshot, we can allow syncing back to server
-          setLoading(false);
-        });
-      } else { 
-        setIsInitialLoad(false);
-        setLoading(false); 
+    let authUnsub = () => {};
+
+    const initAuth = async () => {
+      // 1. Check if we have a redirect result PENDING
+      try {
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult?.user) {
+          console.log("Recovered user from redirect:", redirectResult.user.email);
+          // Don't set user here manually, let onAuthStateChanged handle it to ensure consistent state
+          // but we know a user IS coming, so we could theoretically keep loading true
+        }
+      } catch (e) {
+        console.error("Redirect check error:", e);
       }
-    });
-    return () => { unsubAuth(); unsubStats(); };
+
+      // 2. Listen for auth changes
+      authUnsub = onAuthStateChanged(auth, async (u) => {
+        setUser(u);
+        if (u) {
+          const sRef = doc(db, 'userStats', u.uid);
+          unsubStats = onSnapshot(sRef, async (s) => {
+            if (s.exists()) {
+              const data = s.data();
+              if (data.showStreak !== undefined) setShowStreak(data.showStreak);
+              if (data.showHeatmap !== undefined) setShowHeatmap(data.showHeatmap);
+              if (data.hapticEnabled !== undefined) setHapticEnabled(data.hapticEnabled);
+              if (data.dailyGoal !== undefined) setDailyGoal(data.dailyGoal);
+              if (data.accentColor !== undefined) setAccentColor(data.accentColor);
+              
+              setDailyStats(data.dailyCounts || {});
+              setDailyTags(data.dailyTags || {});
+            } else { 
+              await setDoc(sRef, { 
+                dailyCounts: {}, 
+                dailyTags: {}, 
+                streak: 0, 
+                showStreak: true, 
+                showHeatmap: true, 
+                hapticEnabled: true, 
+                dailyGoal: 3,
+                accentColor: '#F97316'
+              }, { merge: true }); 
+            }
+            setIsInitialLoad(false);
+            setLoading(false);
+          });
+        } else { 
+          // If no user found via listener, ensure we aren't still processing a redirect
+          setIsInitialLoad(false);
+          setLoading(false); 
+        }
+      });
+    };
+
+    initAuth();
+
+    return () => { 
+      if (authUnsub) authUnsub(); 
+      if (unsubStats) unsubStats(); 
+    };
   }, []);
 
   useEffect(() => {
@@ -400,6 +442,8 @@ function App() {
               hapticEnabled={hapticEnabled} setHapticEnabled={setHapticEnabled}
               dailyGoal={dailyGoal} setDailyGoal={setDailyGoal}
               exportData={exportData} deleteAllData={deleteAllData}
+              updateAvailable={updateAvailable}
+              onUpdate={() => window.manualPwaUpdate()}
             />
 
             <ReflectionModal 

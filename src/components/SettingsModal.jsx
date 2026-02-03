@@ -13,7 +13,7 @@ const ACCENT_COLORS = [
 export function SettingsModal({ 
   isOpen, onClose, user, t, lang, setLang, accentColor, setAccentColor, handleLogout,
   showStreak, setShowStreak, showHeatmap, setShowHeatmap, hapticEnabled, setHapticEnabled,
-  dailyGoal, setDailyGoal, exportData, deleteAllData
+  dailyGoal, setDailyGoal, exportData, deleteAllData, updateAvailable, onUpdate
 }) {
   const Toggle = ({ label, value, onChange }) => (
     <div className="flex justify-between items-center p-4 border-b border-apple-border last:border-0">
@@ -132,6 +132,34 @@ export function SettingsModal({
                   <button onClick={() => setLang('en')} className="w-full p-4 flex justify-between items-center active:bg-apple-border/10">
                     <span className="text-[17px] text-apple-text">English</span>
                     {lang === 'en' && <span className="text-blue-500">✓</span>}
+                  </button>
+                </div>
+              </div>
+
+              {/* About Section */}
+              <div>
+                <p className="text-[13px] text-apple-secondary uppercase tracking-wider mb-2 ml-4">{lang === 'sk' ? 'O aplikácii' : 'About'}</p>
+                <div className="bg-apple-card/80 rounded-2xl border border-apple-border overflow-hidden">
+                  <div className="p-4 flex justify-between items-center border-b border-apple-border">
+                    <span className="text-[17px] text-apple-text font-medium">{lang === 'sk' ? 'Verzia' : 'Version'}</span>
+                    <span className="text-apple-secondary">1.2.0</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      if (updateAvailable) {
+                        onUpdate();
+                      } else {
+                        alert(lang === 'sk' ? 'Tvoja aplikácia je aktuálna!' : 'Your app is up to date!');
+                      }
+                    }}
+                    className={`w-full p-4 flex justify-between items-center active:bg-apple-border/10 transition-colors ${updateAvailable ? 'bg-blue-500/10' : ''}`}
+                  >
+                    <span className={`text-[17px] font-semibold ${updateAvailable ? 'text-blue-500' : 'text-apple-text'}`}>
+                      {updateAvailable 
+                        ? (lang === 'sk' ? 'Aktualizovať teraz ✨' : 'Update Now ✨')
+                        : (lang === 'sk' ? 'Skontrolovať aktualizácie' : 'Check for Updates')}
+                    </span>
+                    {updateAvailable && <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />}
                   </button>
                 </div>
               </div>
