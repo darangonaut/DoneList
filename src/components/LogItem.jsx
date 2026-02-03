@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 
-export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t, isSelectable = false, onSelect, getTagColor, triggerHaptic, formatTimestamp }) {
+export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t, isSelectable = false, onSelect, getTagColor, triggerHaptic, formatTimestamp }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(log.text);
   const inputRef = useRef(null);
@@ -84,7 +84,9 @@ export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t,
     <div className={`relative overflow-hidden rounded-2xl mb-3 shadow-sm transition-all duration-500 
       ${isMonthlyTop ? 'ring-2 ring-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.4)]' : 
         isWeeklyTop ? 'ring-2 ring-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.3)]' : 
-        isTopWin ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]' : ''}`}>
+        isTopWin ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]' : ''}`}
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}
+      >
       {!isSelectable && (
         <motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center">
           <button onClick={() => onDelete(log)} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">−</button>
@@ -144,4 +146,4 @@ export function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t,
       </motion.div>
     </div>
   );
-}
+});
