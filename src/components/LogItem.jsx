@@ -81,17 +81,40 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
   const isSpecial = isTopWin || isWeeklyTop || isMonthlyTop;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl mb-3 shadow-sm transition-all duration-500 
-      ${isMonthlyTop ? 'ring-2 ring-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.4)]' : 
-        isWeeklyTop ? 'ring-2 ring-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.3)]' : 
-        isTopWin ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]' : ''}`}
+    <motion.div 
+      whileTap={{ scale: 0.98 }}
+      className={`relative overflow-hidden rounded-[2rem] mb-4 shadow-sm transition-all duration-700 
+      ${isMonthlyTop ? 'shadow-[0_20px_50px_rgba(168,85,247,0.25)]' : 
+        isWeeklyTop ? 'shadow-[0_15px_40px_rgba(96,165,250,0.2)]' : 
+        isTopWin ? 'shadow-[0_10px_30px_rgba(250,204,21,0.15)]' : ''}`}
         style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}
       >
+      {/* Animated Border for Special Wins */}
+      {isSpecial && (
+        <motion.div 
+          animate={{ 
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className={`absolute inset-0 rounded-[2rem] z-0 p-[2px]`}
+          style={{ 
+            background: isMonthlyTop 
+              ? 'linear-gradient(45deg, #A855F7, #EC4899, #A855F7)' 
+              : isWeeklyTop 
+                ? 'linear-gradient(45deg, #3B82F6, #60A5FA, #3B82F6)'
+                : 'linear-gradient(45deg, #F59E0B, #FBBF24, #F59E0B)'
+          }}
+        >
+          <div className="w-full h-full bg-apple-bg rounded-[calc(2rem-2px)]" />
+        </motion.div>
+      )}
+
       {!isSelectable && (
-        <motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center">
+        <motion.div style={{ opacity, scale }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center z-0">
           <button onClick={() => onDelete(log)} className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">−</button>
         </motion.div>
       )}
+      
       <motion.div 
         drag={isEditing || isSelectable ? false : "x"} 
         dragConstraints={{ left: -80, right: 0 }} 
@@ -100,9 +123,9 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
         onDragEnd={handleDragEnd}
         style={{ x, scale: itemScale }} 
         onClick={() => isSelectable && onSelect(log.id)}
-        className={`bg-apple-card/80 backdrop-blur-xl p-4 border flex justify-between items-center relative z-10 rounded-2xl touch-pan-y 
-          ${isSelectable ? 'cursor-pointer active:scale-95 transition-transform' : ''} 
-          ${isMonthlyTop ? 'border-purple-500/50' : isWeeklyTop ? 'border-blue-400/50' : isTopWin ? 'border-yellow-400/50' : 'border-apple-border'}`}
+        className={`bg-apple-card/70 backdrop-blur-2xl p-5 border flex justify-between items-center relative z-10 rounded-[2rem] touch-pan-y transition-colors duration-500
+          ${isSelectable ? 'cursor-pointer active:scale-95' : ''} 
+          ${isMonthlyTop ? 'border-purple-500/30' : isWeeklyTop ? 'border-blue-400/30' : isTopWin ? 'border-yellow-400/30' : 'border-apple-border/50'}`}
       >
         <div className="flex flex-col pr-4 flex-1 select-none text-apple-text">
           {isEditing ? (
@@ -144,6 +167,6 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
           </button>
         )}
       </motion.div>
-    </div>
+    </motion.div>
   );
 });

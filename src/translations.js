@@ -74,7 +74,7 @@ export const translations = {
     aiLoading: "Magická analýza prebieha...",
     aiError: "Ups, AI sa niekde zamotalo. Skús to neskôr.",
     aiClose: "Vďaka, mentor",
-    aiPrompt: "Tu je zoznam mojich úspechov za posledné dni. Analyzuj, v akom jazyku sú napísané, a svoju odpoveď napíš v tom istom jazyku (napr. ak sú po maďarsky, odpovedz po maďarsky). Správaj sa ako podporujúci a mierne stoický mentor. Stručne (max 3 vety) zhrň môj progres, vyzdvihni jeden trend alebo vzorec, ktorý vidíš, a jednou vetou ma silno motivuj do ďalšieho dňa. Používaj tykanie a priateľský, ale rešpektujúci tón.",
+    aiPrompt: "Tu je zoznam mojich úspechov za posledné dni. Svoju odpoveď napíš v tom istom jazyku, v akom sú písané záznamy (napr. ak sú po slovensky, odpovedz po slovensky), ale vôbec nekomentuj, o aký jazyk ide. Správaj sa ako podporujúci a mierne stoický mentor. Stručne (max 3 vety) zhrň môj progres, vyzdvihni jeden trend alebo vzorec, ktorý vidíš, a jednou vetou ma silno motivuj do ďalšieho dňa. Používaj tykanie a priateľský, ale rešpektujúci tón.",
     viewList: "Dnes",
     viewCalendar: "Kalendár"
   },
@@ -153,7 +153,7 @@ export const translations = {
     aiLoading: "Magic analysis in progress...",
     aiError: "Oops, AI got tangled up. Try again later.",
     aiClose: "Thanks, mentor",
-    aiPrompt: "Here is a list of my achievements from the last few days. Analyze the language they are written in, and write your response in that same language (e.g., if they are in Hungarian, answer in Hungarian). Act as a supportive and slightly stoic mentor. Briefly (max 3 sentences) summarize my progress, highlight one trend or pattern you see, and give me one powerful sentence of motivation for the next day. Use a friendly but respectful tone.",
+    aiPrompt: "Here is a list of my achievements from the last few days. Write your response in the same language as the records (e.g., if they are in English, answer in English), but do not comment on what language it is at all. Act as a supportive and slightly stoic mentor. Briefly (max 3 sentences) summarize my progress, highlight one trend or pattern you see, and give me one powerful sentence of motivation for the next day. Use a friendly but respectful tone.",
     viewList: "Today",
     viewCalendar: "Calendar"
   }

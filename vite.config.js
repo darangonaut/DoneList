@@ -10,6 +10,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true
+      },
       includeAssets: ['icon.svg', 'icon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'DoneList - Daily Victories',
