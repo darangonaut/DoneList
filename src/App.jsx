@@ -111,6 +111,7 @@ function App() {
   const [sharingLog, setSharingLog] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Protection flag
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [memoryLog, setMemoryLog] = useState(null);
   const inputRef = useRef(null);
 
   const t = translations[lang] || translations.sk;
@@ -311,11 +312,31 @@ function App() {
     const unsub = onSnapshot(q, (sn) => {
       let d = sn.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (activeTagFilter) d = d.filter(log => log.text?.toLowerCase().includes(activeTagFilter.toLowerCase()) || (log.tags && log.tags.includes(activeTagFilter)));
-      d = d.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      setLogs(d);
+      const sorted = d.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      setLogs(sorted);
+
+      // Select a memory log if not already selected
+      if (sorted.length >= 3 && !memoryLog) {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        
+        // Try finding something older than a week first
+        let potentialMemories = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < weekAgo);
+        
+        // If nothing old, try finding something from a few days ago (for new users)
+        if (potentialMemories.length === 0) {
+          potentialMemories = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < twoDaysAgo);
+        }
+
+        if (potentialMemories.length > 0) {
+          const randomLog = potentialMemories[Math.floor(Math.random() * potentialMemories.length)];
+          setMemoryLog(randomLog);
+        }
+      }
     });
     return unsub;
-  }, [user, activeTagFilter]);
+  }, [user, activeTagFilter, memoryLog]);
 
   const addLog = async (e) => {
     if (e) e.preventDefault(); if (!inputText.trim()) return;
@@ -429,6 +450,7 @@ function App() {
             hasMore={hasMore} setLimitCount={setLimitCount}
             onShare={(log) => setSharingLog(log)}
             showStreak={showStreak} showHeatmap={showHeatmap} dailyGoal={dailyGoal}
+            memoryLog={memoryLog}
           />
 
           <Suspense fallback={<ModalLoading />}>

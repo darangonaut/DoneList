@@ -5,71 +5,271 @@ import { CalendarView } from './CalendarView';
 
 const MAX_LENGTH = 280;
 
-export function Dashboard({ 
+export function Dashboard({
+
   user, logs, streak, heatmapData, t, lang, 
+
   activeTagFilter, setActiveTagFilter, getTagColor,
+
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
+
   setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, updateDoc, db, doc,
+
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
+
   accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
-  showStreak, showHeatmap, dailyGoal
+
+  showStreak, showHeatmap, dailyGoal, memoryLog
+
 }) {
+
   const [view, setView] = useState('list'); // 'list' | 'calendar'
+
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(null);
+
   const [isHeatmapExpanded, setIsHeatmapExpanded] = useState(false);
 
+  const [showMemory, setShowMemory] = useState(true);
+
+
+
   const remainingChars = MAX_LENGTH - inputText.length;
+
   const isCloseToLimit = remainingChars <= 20;
+
   const isOverLimit = remainingChars < 0;
 
+
+
   const todayLogsList = logs.filter(log => {
+
     if (!log.timestamp) return false;
+
     const date = new Date(log.timestamp.seconds * 1000);
+
     return date.toDateString() === new Date().toDateString();
+
   });
+
   
+
   const todayCount = todayLogsList.length;
+
   const isGoalReached = todayCount >= dailyGoal;
 
+
+
   const getGreeting = () => {
+
     const hour = new Date().getHours();
+
     if (lang === 'sk') {
+
       if (hour < 10) return `Dobré ráno, ${user.displayName.split(' ')[0]} 🌅`;
+
       if (hour < 18) return `Tvoj úspešný deň, ${user.displayName.split(' ')[0]} ✨`;
+
       return `Dobrý večer, ${user.displayName.split(' ')[0]} 🌙`;
+
     }
+
     if (hour < 10) return `Good morning, ${user.displayName.split(' ')[0]} 🌅`;
+
     if (hour < 18) return `Your productive day, ${user.displayName.split(' ')[0]} ✨`;
+
     return `Good evening, ${user.displayName.split(' ')[0]} 🌙`;
+
   };
 
+
+
   const ReflectionCard = ({ type, icon, title, isCompleted }) => (
+
     <motion.button
+
       initial={{ opacity: 0, y: 10 }}
+
       animate={{ opacity: 1, y: 0 }}
+
       onClick={() => !isCompleted && setReflectionType(type)}
+
       className={`w-full p-6 rounded-[2rem] border mb-6 flex items-center justify-between transition-all active:scale-[0.98] ${
+
         isCompleted 
+
           ? 'bg-apple-card/40 border-apple-border/50 opacity-60' 
+
           : 'bg-apple-card border-apple-border shadow-lg shadow-[var(--accent-color)]/5'
+
       }`}
+
     >
+
       <div className="flex items-center gap-4">
+
         <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`}>{icon}</span>
+
         <div className="text-left">
+
           <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{lang === 'sk' ? 'Čas na reflexiu' : 'Reflection Time'}</p>
+
           <h3 className="text-xl font-bold text-apple-text">{title}</h3>
+
         </div>
+
       </div>
+
       <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-apple-border'}`}>
+
         {isCompleted ? '✓' : '→'}
+
       </div>
+
     </motion.button>
+
   );
 
+
+
+    const MemoryCard = ({ log }) => {
+
+
+
+      if (!log) return null;
+
+
+
+      const date = new Date(log.timestamp.seconds * 1000);
+
+
+
+      const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+
+
+      
+
+
+
+      const isVeryOld = (new Date().getTime() - date.getTime()) > 7 * 24 * 60 * 60 * 1000;
+
+
+
+      
+
+
+
+      return (
+
+
+
+        <motion.div
+
+
+
+          initial={{ opacity: 0, scale: 0.9 }}
+
+
+
+          animate={{ opacity: 1, scale: 1 }}
+
+
+
+          className="relative overflow-hidden rounded-[2rem] p-6 mb-8 border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/10 backdrop-blur-xl"
+
+
+
+        >
+
+
+
+          <div className="flex justify-between items-start mb-3">
+
+
+
+            <div className="flex items-center gap-2">
+
+
+
+              <span className="text-xl">{isVeryOld ? '🕰️' : '✨'}</span>
+
+
+
+              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">
+
+
+
+                {isVeryOld 
+
+
+
+                  ? (lang === 'sk' ? 'Spomienka z minulosti' : 'Memory from the past')
+
+
+
+                  : (lang === 'sk' ? 'Nedávny úspech' : 'Recent Victory')}
+
+
+
+              </span>
+
+
+
+            </div>
+
+
+
+            <button onClick={() => setShowMemory(false)} className="text-orange-600/40 hover:text-orange-600">✕</button>
+
+
+
+          </div>
+
+        <p className="text-[17px] font-medium text-apple-text italic leading-relaxed mb-4">
+
+          "{
+
+log.text}"
+
+        </p>
+
+        <div className="flex justify-between items-center">
+
+          <span className="text-[13px] font-bold text-orange-600/60">{dateStr}</span>
+
+          <button 
+
+            onClick={() => onShare(log)}
+
+            className="text-[11px] font-black uppercase tracking-widest text-orange-600 underline underline-offset-4"
+
+          >
+
+            {lang === 'sk' ? 'Pripomenúť si' : 'Reminisce'}
+
+          </button>
+
+        </div>
+
+        {/* Nostalgic Texture Overlay */}
+
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/p6.png')]" />
+
+      </motion.div>
+
+    );
+
+  };
+
+
+
   return (
+
     <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
+
       <header className="pt-12 pb-4 sticky top-0 bg-apple-bg/60 backdrop-blur-xl z-30 border-b border-apple-border/30 -mx-6 px-6 text-left">
+
+
         <div className="flex justify-between items-start mb-6 text-left">
           <motion.div layout className="text-left flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap justify-start">
@@ -199,6 +399,11 @@ export function Dashboard({
               exit={{ opacity: 0 }}
               className="space-y-0 text-left"
             >
+              {/* On This Day / Memory Card */}
+              {!activeTagFilter && showMemory && memoryLog && (
+                <MemoryCard log={memoryLog} />
+              )}
+
               {/* Contextual Reflection Prompts */}
               {!activeTagFilter && isEvening && (
                 <div className="mb-8">
