@@ -5,271 +5,107 @@ import { CalendarView } from './CalendarView';
 
 const MAX_LENGTH = 280;
 
-export function Dashboard({
+const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType, t }) => (
+  <motion.button
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    onClick={() => !isCompleted && setReflectionType(type)}
+    className={`w-full p-6 rounded-[2rem] border mb-6 flex items-center justify-between transition-all active:scale-[0.98] ${
+      isCompleted 
+        ? 'bg-apple-card/40 border-apple-border/50 opacity-60' 
+        : 'bg-apple-card border-apple-border shadow-lg shadow-[var(--accent-color)]/5'
+    }`}
+  >
+    <div className="flex items-center gap-4">
+      <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`}>{icon}</span>
+      <div className="text-left">
+        <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{t.reflectionTime}</p>
+        <h3 className="text-xl font-bold text-apple-text">{title}</h3>
+      </div>
+    </div>
+    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-apple-border'}`}>
+      {isCompleted ? '✓' : '→'}
+    </div>
+  </motion.button>
+);
 
+const MemoryCard = ({ log, lang, setShowMemory, onShare, t }) => {
+  if (!log) return null;
+  const date = new Date(log.timestamp.seconds * 1000);
+  const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+  
+  const isVeryOld = (new Date().getTime() - date.getTime()) > 7 * 24 * 60 * 60 * 1000;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative overflow-hidden rounded-[2rem] p-6 mb-8 border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/10 backdrop-blur-xl"
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{isVeryOld ? '🕰️' : '✨'}</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">
+            {isVeryOld ? t.memoryTitle : t.recentWinTitle}
+          </span>
+        </div>
+        <button onClick={() => setShowMemory(false)} className="text-orange-600/40 hover:text-orange-600 p-1">✕</button>
+      </div>
+      <p className="text-[17px] font-medium text-apple-text italic leading-relaxed mb-4">
+        "{log.text}"
+      </p>
+      <div className="flex justify-between items-center">
+        <span className="text-[13px] font-bold text-orange-600/60">{dateStr}</span>
+        <button 
+          onClick={() => onShare(log)}
+          className="text-[11px] font-black uppercase tracking-widest text-orange-600 underline underline-offset-4"
+        >
+          {t.reminisce}
+        </button>
+      </div>
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/p6.png')]" />
+    </motion.div>
+  );
+};
+
+export function Dashboard({ 
   user, logs, streak, heatmapData, t, lang, 
-
   activeTagFilter, setActiveTagFilter, getTagColor,
-
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
-
   setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, updateDoc, db, doc,
-
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
-
   accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
-
   showStreak, showHeatmap, dailyGoal, memoryLog
-
 }) {
-
   const [view, setView] = useState('list'); // 'list' | 'calendar'
-
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(null);
-
   const [isHeatmapExpanded, setIsHeatmapExpanded] = useState(false);
-
   const [showMemory, setShowMemory] = useState(true);
 
-
-
   const remainingChars = MAX_LENGTH - inputText.length;
-
   const isCloseToLimit = remainingChars <= 20;
-
   const isOverLimit = remainingChars < 0;
 
-
-
   const todayLogsList = logs.filter(log => {
-
     if (!log.timestamp) return false;
-
     const date = new Date(log.timestamp.seconds * 1000);
-
     return date.toDateString() === new Date().toDateString();
-
   });
-
   
-
   const todayCount = todayLogsList.length;
-
   const isGoalReached = todayCount >= dailyGoal;
 
-
-
   const getGreeting = () => {
-
     const hour = new Date().getHours();
-
-    if (lang === 'sk') {
-
-      if (hour < 10) return `Dobré ráno, ${user.displayName.split(' ')[0]} 🌅`;
-
-      if (hour < 18) return `Tvoj úspešný deň, ${user.displayName.split(' ')[0]} ✨`;
-
-      return `Dobrý večer, ${user.displayName.split(' ')[0]} 🌙`;
-
-    }
-
-    if (hour < 10) return `Good morning, ${user.displayName.split(' ')[0]} 🌅`;
-
-    if (hour < 18) return `Your productive day, ${user.displayName.split(' ')[0]} ✨`;
-
-    return `Good evening, ${user.displayName.split(' ')[0]} 🌙`;
-
+    const name = user.displayName.split(' ')[0];
+    if (hour < 10) return `${t.greetingMorning}, ${name} 🌅`;
+    if (hour < 18) return `${t.greetingDay}, ${name} ✨`;
+    return `${t.greetingEvening}, ${name} 🌙`;
   };
-
-
-
-  const ReflectionCard = ({ type, icon, title, isCompleted }) => (
-
-    <motion.button
-
-      initial={{ opacity: 0, y: 10 }}
-
-      animate={{ opacity: 1, y: 0 }}
-
-      onClick={() => !isCompleted && setReflectionType(type)}
-
-      className={`w-full p-6 rounded-[2rem] border mb-6 flex items-center justify-between transition-all active:scale-[0.98] ${
-
-        isCompleted 
-
-          ? 'bg-apple-card/40 border-apple-border/50 opacity-60' 
-
-          : 'bg-apple-card border-apple-border shadow-lg shadow-[var(--accent-color)]/5'
-
-      }`}
-
-    >
-
-      <div className="flex items-center gap-4">
-
-        <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`}>{icon}</span>
-
-        <div className="text-left">
-
-          <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{lang === 'sk' ? 'Čas na reflexiu' : 'Reflection Time'}</p>
-
-          <h3 className="text-xl font-bold text-apple-text">{title}</h3>
-
-        </div>
-
-      </div>
-
-      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-apple-border'}`}>
-
-        {isCompleted ? '✓' : '→'}
-
-      </div>
-
-    </motion.button>
-
-  );
-
-
-
-    const MemoryCard = ({ log }) => {
-
-
-
-      if (!log) return null;
-
-
-
-      const date = new Date(log.timestamp.seconds * 1000);
-
-
-
-      const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-
-
-
-      
-
-
-
-      const isVeryOld = (new Date().getTime() - date.getTime()) > 7 * 24 * 60 * 60 * 1000;
-
-
-
-      
-
-
-
-      return (
-
-
-
-        <motion.div
-
-
-
-          initial={{ opacity: 0, scale: 0.9 }}
-
-
-
-          animate={{ opacity: 1, scale: 1 }}
-
-
-
-          className="relative overflow-hidden rounded-[2rem] p-6 mb-8 border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/10 backdrop-blur-xl"
-
-
-
-        >
-
-
-
-          <div className="flex justify-between items-start mb-3">
-
-
-
-            <div className="flex items-center gap-2">
-
-
-
-              <span className="text-xl">{isVeryOld ? '🕰️' : '✨'}</span>
-
-
-
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">
-
-
-
-                {isVeryOld 
-
-
-
-                  ? (lang === 'sk' ? 'Spomienka z minulosti' : 'Memory from the past')
-
-
-
-                  : (lang === 'sk' ? 'Nedávny úspech' : 'Recent Victory')}
-
-
-
-              </span>
-
-
-
-            </div>
-
-
-
-            <button onClick={() => setShowMemory(false)} className="text-orange-600/40 hover:text-orange-600">✕</button>
-
-
-
-          </div>
-
-        <p className="text-[17px] font-medium text-apple-text italic leading-relaxed mb-4">
-
-          "{
-
-log.text}"
-
-        </p>
-
-        <div className="flex justify-between items-center">
-
-          <span className="text-[13px] font-bold text-orange-600/60">{dateStr}</span>
-
-          <button 
-
-            onClick={() => onShare(log)}
-
-            className="text-[11px] font-black uppercase tracking-widest text-orange-600 underline underline-offset-4"
-
-          >
-
-            {lang === 'sk' ? 'Pripomenúť si' : 'Reminisce'}
-
-          </button>
-
-        </div>
-
-        {/* Nostalgic Texture Overlay */}
-
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/p6.png')]" />
-
-      </motion.div>
-
-    );
-
-  };
-
-
 
   return (
-
     <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
-
       <header className="pt-12 pb-4 sticky top-0 bg-apple-bg/60 backdrop-blur-xl z-30 border-b border-apple-border/30 -mx-6 px-6 text-left">
-
-
         <div className="flex justify-between items-start mb-6 text-left">
           <motion.div layout className="text-left flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap justify-start">
@@ -333,7 +169,7 @@ log.text}"
               onClick={() => { triggerHaptic('light'); setIsHeatmapExpanded(!isHeatmapExpanded); }}
               className="text-[10px] font-black uppercase tracking-widest text-apple-secondary flex items-center gap-1.5 hover:text-apple-text transition-colors mb-2"
             >
-              <span>{lang === 'sk' ? 'Aktivita' : 'Activity'}</span>
+              <span>{t.activity}</span>
               <motion.span animate={{ rotate: isHeatmapExpanded ? 180 : 0 }}>↓</motion.span>
             </button>
             <AnimatePresence>
@@ -371,21 +207,20 @@ log.text}"
         </AnimatePresence>
       </header>
 
-      {/* View Switcher - Minimalist */}
       <div className="flex justify-start my-6 gap-6 border-b border-apple-border/30">
         <button 
           onClick={() => { triggerHaptic('light'); setView('list'); setCalendarSelectedDate(null); }}
           className={`pb-2 text-sm font-bold transition-all relative ${view === 'list' ? 'text-apple-text' : 'text-apple-secondary'}`}
         >
-          {t.viewList}
           {view === 'list' && <motion.div layoutId="view-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />}
+          {t.viewList}
         </button>
         <button 
           onClick={() => { triggerHaptic('light'); setView('calendar'); }}
           className={`pb-2 text-sm font-bold transition-all relative ${view === 'calendar' ? 'text-apple-text' : 'text-apple-secondary'}`}
         >
-          {t.viewCalendar}
           {view === 'calendar' && <motion.div layoutId="view-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />}
+          {t.viewCalendar}
         </button>
       </div>
 
@@ -399,22 +234,20 @@ log.text}"
               exit={{ opacity: 0 }}
               className="space-y-0 text-left"
             >
-              {/* On This Day / Memory Card */}
               {!activeTagFilter && showMemory && memoryLog && (
-                <MemoryCard log={memoryLog} />
+                <MemoryCard log={memoryLog} lang={lang} setShowMemory={setShowMemory} onShare={onShare} t={t} />
               )}
 
-              {/* Contextual Reflection Prompts */}
               {!activeTagFilter && isEvening && (
                 <div className="mb-8">
                   {!hasDailyTop && todayCount > 0 && (
-                    <ReflectionCard type="daily" icon="🌟" title={t.reflection} isCompleted={false} />
+                    <ReflectionCard type="daily" icon="🌟" title={t.reflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
                   )}
                   {isSunday && !hasWeeklyTop && (
-                    <ReflectionCard type="weekly" icon="💎" title={t.weeklyReflection} isCompleted={false} />
+                    <ReflectionCard type="weekly" icon="💎" title={t.weeklyReflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
                   )}
                   {isLastDayOfMonth() && !hasMonthlyTop && (
-                    <ReflectionCard type="monthly" icon="🏆" title={t.monthlyReflection} isCompleted={false} />
+                    <ReflectionCard type="monthly" icon="🏆" title={t.monthlyReflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
                   )}
                 </div>
               )}
@@ -450,17 +283,17 @@ log.text}"
                 >
                   <div className="text-5xl mb-6 opacity-20 italic">✨</div>
                   <h3 className="text-xl font-bold text-apple-text mb-2">
-                    {lang === 'sk' ? `Čo sa ti dnes podarilo, ${user.displayName.split(' ')[0]}?` : `What did you achieve today, ${user.displayName.split(' ')[0]}?`}
+                    {t.emptyStateTitle.replace('{name}', user.displayName.split(' ')[0])}
                   </h3>
                   <p className="text-apple-secondary text-[15px] leading-relaxed italic">
-                    {lang === 'sk' ? 'Aj ten najmenší krok vpred je víťazstvo, ktoré stojí za zápis.' : 'Even the smallest step forward is a victory worth recording.'}
+                    {t.emptyStateSub}
                   </p>
                   <button 
                     onClick={() => { triggerHaptic('light'); setIsInputExpanded(true); }}
                     style={{ color: accentColor }}
                     className="mt-8 font-black text-sm uppercase tracking-widest animate-pulse"
                   >
-                    {lang === 'sk' ? '+ Pridať prvé víťazstvo' : '+ Add your first win'}
+                    {t.addFirstWin}
                   </button>
                 </motion.div>
               )}
@@ -525,7 +358,6 @@ log.text}"
         </AnimatePresence>
       </main>
 
-      {/* FAB & Input - UX Refined */}
       <div className="fixed inset-x-0 bottom-0 flex flex-col items-center justify-end z-[120] pointer-events-none pb-10">
         <AnimatePresence>
           {!isInputExpanded && (
@@ -550,14 +382,13 @@ log.text}"
             >
               <div className="w-full max-w-xl flex flex-col h-full pt-12">
                 <div className="flex justify-between items-center mb-12">
-                  <h2 className="text-xl font-black text-apple-secondary uppercase tracking-widest">{lang === 'sk' ? 'Nové víťazstvo' : 'New Victory'}</h2>
+                  <h2 className="text-xl font-black text-apple-secondary uppercase tracking-widest">{t.newVictory}</h2>
                   <button onClick={() => setIsInputExpanded(false)} className="text-apple-text font-bold text-lg p-2 active:opacity-50">✕</button>
                 </div>
                 
                 <form 
                   onSubmit={(e) => {
                     triggerHaptic('success');
-                    // Add a temporary flash effect
                     const el = e.currentTarget;
                     el.style.filter = 'brightness(1.5) saturate(1.2)';
                     setTimeout(() => el.style.filter = '', 200);
@@ -572,7 +403,7 @@ log.text}"
                       value={inputText} 
                       onChange={(e) => setInputText(e.target.value)} 
                       placeholder={t.placeholder} 
-                      className="w-full bg-transparent border-none text-3xl md:text-5xl font-black text-apple-text placeholder:text-apple-secondary/20 focus:ring-0 outline-none resize-none min-h-[150px] text-center" 
+                      className="w-full bg-transparent border-none text-3xl md:text-4xl font-black text-apple-text placeholder:text-apple-secondary/20 focus:ring-0 outline-none resize-none min-h-[150px] text-center" 
                       onKeyDown={(e) => { 
                         if (e.key === 'Enter' && !e.shiftKey) { 
                           if (!isOverLimit) { e.preventDefault(); addLog(); } 
@@ -593,7 +424,7 @@ log.text}"
                       style={{ backgroundColor: isOverLimit ? '#3a3a3c' : accentColor }} 
                       className={`w-full py-6 rounded-[2.5rem] text-white font-black text-xl shadow-2xl transition-all ${isOverLimit || !inputText.trim() ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 shadow-[0_20px_50px_rgba(0,0,0,0.2)]'}`}
                     >
-                      {lang === 'sk' ? 'Uložiť' : 'Save'}
+                      {t.save}
                     </button>
                   </div>
                 </form>

@@ -6,6 +6,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) {
   const [insight, setInsight] = useState('');
+  const [superpowers, setSuperpowers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,6 +17,7 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
     }
     setLoading(true);
     setError('');
+    setSuperpowers([]);
     try {
       const genAI = new GoogleGenerativeAI(API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -47,8 +49,17 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
       const prompt = `${t.aiPrompt}${additionalInstruction}\n\nLogs:\n${recentLogs}`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
-      setInsight(text);
+      const fullText = response.text();
+      
+      // Parse superpowers
+      const superpowerMatch = fullText.match(/SUPERPOWERS:\s*(.*)/i);
+      if (superpowerMatch) {
+        const powers = superpowerMatch[1].split(',').map(p => p.trim().replace(/[.!?]/g, ''));
+        setSuperpowers(powers.filter(p => p.length > 0));
+        setInsight(fullText.replace(/SUPERPOWERS:.*/i, '').trim());
+      } else {
+        setInsight(fullText.trim());
+      }
     } catch (err) {
       console.error("Gemini Error:", err);
       setError(err.message || "Unknown error");
@@ -61,6 +72,7 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
       generateInsight();
     } else {
       setInsight('');
+      setSuperpowers([]);
       setError(false);
     }
   }, [isOpen]);
@@ -122,13 +134,47 @@ export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) 
                     <p className="text-xs text-red-400 opacity-80">{error}</p>
                   </div>
                 ) : (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-apple-text text-lg leading-relaxed whitespace-pre-wrap italic font-medium"
-                  >
-                    "{insight}"
-                  </motion.div>
+                  <div className="space-y-8">
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-apple-text text-lg leading-relaxed whitespace-pre-wrap italic font-medium"
+                    >
+                      "{insight}"
+                    </motion.div>
+
+                    {superpowers.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="pt-6 border-t border-apple-border/50"
+                      >
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-apple-secondary mb-4">
+                          {lang === 'sk' ? 'Tvoje superschopnosti' : 'Your Superpowers'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {superpowers.map((power, i) => (
+                            <motion.span 
+                              key={i}
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ 
+                                type: 'spring', 
+                                damping: 12, 
+                                stiffness: 200, 
+                                delay: 0.5 + (i * 0.1) 
+                              }}
+                              className="px-4 py-2 rounded-full bg-apple-bg border border-apple-border shadow-sm flex items-center gap-2"
+                            >
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+                              <span className="text-[15px] font-bold text-apple-text">{power}</span>
+                            </motion.span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
               </div>
 

@@ -85,7 +85,7 @@ export function SettingsModal({
                 <div className="bg-apple-card/80 rounded-2xl border border-apple-border overflow-hidden">
                   <Toggle label={lang === 'sk' ? 'Zobraziť sériu (🔥)' : 'Show Streak'} value={showStreak} onChange={setShowStreak} />
                   <Toggle label={lang === 'sk' ? 'Zobraziť heatmapu' : 'Show Heatmap'} value={showHeatmap} onChange={setShowHeatmap} />
-                  <Toggle label={lang === 'sk' ? 'Haptická odozva' : 'Haptic Feedback'} value={hapticEnabled} onChange={setHapticEnabled} />
+                  <Toggle label={t.hapticFeedback} value={hapticEnabled} onChange={setHapticEnabled} />
                 </div>
               </div>
 
@@ -142,7 +142,7 @@ export function SettingsModal({
                 <div className="bg-apple-card/80 rounded-2xl border border-apple-border overflow-hidden">
                   <div className="p-4 flex justify-between items-center border-b border-apple-border">
                     <span className="text-[17px] text-apple-text font-medium">{lang === 'sk' ? 'Verzia' : 'Version'}</span>
-                    <span className="text-apple-secondary">1.2.1</span>
+                    <span className="text-apple-secondary">1.2.4</span>
                   </div>
                   <button 
                     onClick={() => {

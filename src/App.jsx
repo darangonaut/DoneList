@@ -92,7 +92,11 @@ function App() {
   const [limitCount, setLimitCount] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [feedback, setFeedback] = useState('');
-  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
+  const [lang, setLang] = useState(() => {
+    const saved = localStorage.getItem('lang');
+    if (saved) return saved;
+    return navigator.language.startsWith('sk') ? 'sk' : 'en';
+  });
   const [dailyStats, setDailyStats] = useState(() => JSON.parse(localStorage.getItem('cached_stats')) || {});
   const [dailyTags, setDailyTags] = useState(() => JSON.parse(localStorage.getItem('cached_tags')) || {});
   
@@ -156,6 +160,21 @@ function App() {
     if (!hapticEnabled || !window.navigator.vibrate) return;
     const patterns = { light: 10, medium: 20, success: [10, 30, 10] };
     window.navigator.vibrate(patterns[type] || 10);
+    playUISound(type);
+  };
+
+  const playUISound = (type) => {
+    if (!hapticEnabled) return; // Using haptic setting as master switch for now
+    
+    const sounds = {
+      light: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Subtle click
+      medium: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Pop
+      success: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3' // Sparkle/Chime
+    };
+
+    const audio = new Audio(sounds[type]);
+    audio.volume = type === 'success' ? 0.3 : 0.15;
+    audio.play().catch(() => {}); // Ignore blocked autoplay
   };
 
   const handleLogin = async () => { 
@@ -230,10 +249,11 @@ function App() {
         showHeatmap, 
         hapticEnabled, 
         dailyGoal,
-        accentColor 
+        accentColor,
+        lang 
       }, { merge: true });
     }
-  }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, user, isInitialLoad]);
+  }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, lang, user, isInitialLoad]);
 
   useEffect(() => {
     const handleUpdateAvailable = () => setUpdateAvailable(true);
@@ -272,6 +292,7 @@ function App() {
               if (data.hapticEnabled !== undefined) setHapticEnabled(data.hapticEnabled);
               if (data.dailyGoal !== undefined) setDailyGoal(data.dailyGoal);
               if (data.accentColor !== undefined) setAccentColor(data.accentColor);
+              if (data.lang !== undefined) setLang(data.lang);
               
               setDailyStats(data.dailyCounts || {});
               setDailyTags(data.dailyTags || {});
@@ -315,28 +336,30 @@ function App() {
       const sorted = d.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
       setLogs(sorted);
 
-      // Select a memory log if not already selected
-      if (sorted.length >= 3 && !memoryLog) {
+      // Select a memory log only if we don't have one and we have enough data
+      setMemoryLog(prev => {
+        if (prev || sorted.length < 3) return prev;
+
         const now = new Date();
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
         
-        // Try finding something older than a week first
-        let potentialMemories = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < weekAgo);
-        
-        // If nothing old, try finding something from a few days ago (for new users)
-        if (potentialMemories.length === 0) {
-          potentialMemories = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < twoDaysAgo);
+        let candidates = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < weekAgo);
+        if (candidates.length === 0) {
+          candidates = sorted.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000) < twoDaysAgo);
         }
 
-        if (potentialMemories.length > 0) {
-          const randomLog = potentialMemories[Math.floor(Math.random() * potentialMemories.length)];
-          setMemoryLog(randomLog);
+        if (candidates.length > 0) {
+          // Prioritize top moments
+          const topMoments = candidates.filter(l => l.isTopWin || l.isWeeklyTop || l.isMonthlyTop);
+          const pool = topMoments.length > 0 ? topMoments : candidates;
+          return pool[Math.floor(Math.random() * pool.length)];
         }
-      }
+        return null;
+      });
     });
     return unsub;
-  }, [user, activeTagFilter, memoryLog]);
+  }, [user, activeTagFilter]);
 
   const addLog = async (e) => {
     if (e) e.preventDefault(); if (!inputText.trim()) return;
@@ -357,6 +380,9 @@ function App() {
       const countToday = updatedDailyCounts[todayKey];
       if (countToday === dailyGoal) {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [accentColor, '#FFFFFF'] });
+        const celebrateAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2018-preview.mp3');
+        celebrateAudio.volume = 0.4;
+        celebrateAudio.play().catch(() => {});
         setFeedback(t.goalReached);
       } else if ([7, 30, 100].includes(newCalculatedStreak) && countToday === 1) {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
