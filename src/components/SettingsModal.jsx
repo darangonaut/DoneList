@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '../context/AppContext';
 
 const ACCENT_COLORS = [
   { id: 'orange', value: '#F97316' },
@@ -11,10 +12,18 @@ const ACCENT_COLORS = [
 ];
 
 export function SettingsModal({ 
-  isOpen, onClose, user, t, lang, setLang, accentColor, setAccentColor, handleLogout,
-  showStreak, setShowStreak, showHeatmap, setShowHeatmap, hapticEnabled, setHapticEnabled,
-  dailyGoal, setDailyGoal, exportData, deleteAllData, updateAvailable, onUpdate
+  isOpen, onClose, user, handleLogout,
+  exportData, deleteAllData, updateAvailable, onUpdate
 }) {
+  const { 
+    t, lang, setLang, 
+    accentColor, setAccentColor, 
+    hapticEnabled, setHapticEnabled,
+    dailyGoal, setDailyGoal,
+    showStreak, setShowStreak,
+    showHeatmap, setShowHeatmap
+  } = useApp();
+
   const Toggle = ({ label, value, onChange }) => (
     <div className="flex justify-between items-center p-4 border-b border-apple-border last:border-0">
       <span className="text-[17px] text-apple-text font-medium">{label}</span>
@@ -142,7 +151,7 @@ export function SettingsModal({
                 <div className="bg-apple-card/80 rounded-2xl border border-apple-border overflow-hidden">
                   <div className="p-4 flex justify-between items-center border-b border-apple-border">
                     <span className="text-[17px] text-apple-text font-medium">{lang === 'sk' ? 'Verzia' : 'Version'}</span>
-                    <span className="text-apple-secondary">1.2.4</span>
+                    <span className="text-apple-secondary">1.2.5</span>
                   </div>
                   <button 
                     onClick={() => {

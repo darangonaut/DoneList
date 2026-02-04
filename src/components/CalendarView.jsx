@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '../context/AppContext';
 
-export function CalendarView({ logs, t, lang, accentColor, onSelectDate }) {
+export function CalendarView({ logs, onSelectDate }) {
+  const { t, lang, accentColor } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -27,13 +29,23 @@ export function CalendarView({ logs, t, lang, accentColor, onSelectDate }) {
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   const getLogCountForDay = (day) => {
-    const dateStr = new Date(year, month, day).toDateString();
-    return logs.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === dateStr).length;
+    const targetDate = new Date(year, month, day).toDateString();
+    return logs.filter(l => {
+      if (!l.timestamp) return false;
+      const logDate = l.timestamp.seconds ? new Date(l.timestamp.seconds * 1000) : l.timestamp.toDate();
+      return logDate.toDateString() === targetDate;
+    }).length;
   };
 
-  const hasTopWinForDay = (day) => {
-    const dateStr = new Date(year, month, day).toDateString();
-    return logs.some(l => l.isTopWin && l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === dateStr);
+  const hasSpecialWinForDay = (day) => {
+    const targetDate = new Date(year, month, day).toDateString();
+    return logs.some(l => {
+      if (!l.timestamp) return false;
+      const isSpecial = l.isTopWin || l.isWeeklyTop || l.isMonthlyTop;
+      if (!isSpecial) return false;
+      const logDate = l.timestamp.seconds ? new Date(l.timestamp.seconds * 1000) : l.timestamp.toDate();
+      return logDate.toDateString() === targetDate;
+    });
   };
 
   return (
@@ -65,7 +77,7 @@ export function CalendarView({ logs, t, lang, accentColor, onSelectDate }) {
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           const count = getLogCountForDay(day);
-          const hasWin = hasTopWinForDay(day);
+          const hasWin = hasSpecialWinForDay(day);
           const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
           const isSelected = selectedDate && selectedDate.getDate() === day && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
 

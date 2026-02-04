@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogItem } from './LogItem';
+import { useApp } from '../context/AppContext';
 
-export function ReflectionModal({ isOpen, type, candidates, onSelect, onClose, t, lang, getTagColor, formatTimestamp }) {
+export function ReflectionModal({ isOpen, type, candidates, onSelect, onClose, getTagColor }) {
+  const { t } = useApp();
   if (!type) return null;
 
   return (
@@ -35,10 +37,7 @@ export function ReflectionModal({ isOpen, type, candidates, onSelect, onClose, t
                   log={log} 
                   isSelectable={true} 
                   onSelect={onSelect} 
-                  lang={lang} 
-                  t={t} 
                   getTagColor={getTagColor}
-                  formatTimestamp={formatTimestamp}
                 />
               )) : (
                 <div className="text-center py-20 text-apple-secondary italic opacity-50">

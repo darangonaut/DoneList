@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import { useApp } from '../context/AppContext';
 
-export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, lang, t, isSelectable = false, onSelect, getTagColor, triggerHaptic, formatTimestamp }) {
+export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagClick, onShare, isSelectable = false, onSelect, getTagColor }) {
+  const { t, triggerHaptic, formatTimestamp } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(log.text);
   const inputRef = useRef(null);

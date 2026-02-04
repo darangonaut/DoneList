@@ -2,34 +2,39 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogItem } from './LogItem';
 import { CalendarView } from './CalendarView';
+import { useApp } from '../context/AppContext';
 
 const MAX_LENGTH = 280;
 
-const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType, t }) => (
-  <motion.button
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    onClick={() => !isCompleted && setReflectionType(type)}
-    className={`w-full p-6 rounded-[2rem] border mb-6 flex items-center justify-between transition-all active:scale-[0.98] ${
-      isCompleted 
-        ? 'bg-apple-card/40 border-apple-border/50 opacity-60' 
-        : 'bg-apple-card border-apple-border shadow-lg shadow-[var(--accent-color)]/5'
-    }`}
-  >
-    <div className="flex items-center gap-4">
-      <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`}>{icon}</span>
-      <div className="text-left">
-        <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{t.reflectionTime}</p>
-        <h3 className="text-xl font-bold text-apple-text">{title}</h3>
+const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType }) => {
+  const { t } = useApp();
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={() => !isCompleted && setReflectionType(type)}
+      className={`w-full p-6 rounded-[2rem] border mb-6 flex items-center justify-between transition-all active:scale-[0.98] ${
+        isCompleted 
+          ? 'bg-apple-card/40 border-apple-border/50 opacity-60' 
+          : 'bg-apple-card border-apple-border shadow-lg shadow-[var(--accent-color)]/5'
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`}>{icon}</span>
+        <div className="text-left">
+          <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{t.reflectionTime}</p>
+          <h3 className="text-xl font-bold text-apple-text">{title}</h3>
+        </div>
       </div>
-    </div>
-    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-apple-border'}`}>
-      {isCompleted ? '✓' : '→'}
-    </div>
-  </motion.button>
-);
+      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-apple-border'}`}>
+        {isCompleted ? '✓' : '→'}
+      </div>
+    </motion.button>
+  );
+};
 
-const MemoryCard = ({ log, lang, setShowMemory, onShare, t }) => {
+const MemoryCard = ({ log, setShowMemory, onShare }) => {
+  const { t, lang } = useApp();
   if (!log) return null;
   const date = new Date(log.timestamp.seconds * 1000);
   const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -69,14 +74,15 @@ const MemoryCard = ({ log, lang, setShowMemory, onShare, t }) => {
 };
 
 export function Dashboard({ 
-  user, logs, streak, heatmapData, t, lang, 
+  user, logs, streak, heatmapData, 
   activeTagFilter, setActiveTagFilter, getTagColor,
   isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
-  setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, updateDoc, db, doc,
+  setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, onUpdate,
   isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
-  accentColor, triggerHaptic, hasMore, setLimitCount, onShare,
-  showStreak, showHeatmap, dailyGoal, memoryLog
+  hasMore, setLimitCount, onShare,
+  memoryLog
 }) {
+  const { t, lang, accentColor, dailyGoal, triggerHaptic, showStreak, showHeatmap } = useApp();
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(null);
   const [isHeatmapExpanded, setIsHeatmapExpanded] = useState(false);
@@ -87,7 +93,8 @@ export function Dashboard({
   const isOverLimit = remainingChars < 0;
 
   const todayLogsList = logs.filter(log => {
-    if (!log.timestamp) return false;
+    // Latency compensation: if timestamp is null, it's a new log from "just now"
+    if (!log.timestamp) return true;
     const date = new Date(log.timestamp.seconds * 1000);
     return date.toDateString() === new Date().toDateString();
   });
@@ -235,19 +242,19 @@ export function Dashboard({
               className="space-y-0 text-left"
             >
               {!activeTagFilter && showMemory && memoryLog && (
-                <MemoryCard log={memoryLog} lang={lang} setShowMemory={setShowMemory} onShare={onShare} t={t} />
+                <MemoryCard log={memoryLog} setShowMemory={setShowMemory} onShare={onShare} />
               )}
 
               {!activeTagFilter && isEvening && (
                 <div className="mb-8">
                   {!hasDailyTop && todayCount > 0 && (
-                    <ReflectionCard type="daily" icon="🌟" title={t.reflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
+                    <ReflectionCard type="daily" icon="🌟" title={t.reflection} isCompleted={false} setReflectionType={setReflectionType} />
                   )}
                   {isSunday && !hasWeeklyTop && (
-                    <ReflectionCard type="weekly" icon="💎" title={t.weeklyReflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
+                    <ReflectionCard type="weekly" icon="💎" title={t.weeklyReflection} isCompleted={false} setReflectionType={setReflectionType} />
                   )}
                   {isLastDayOfMonth() && !hasMonthlyTop && (
-                    <ReflectionCard type="monthly" icon="🏆" title={t.monthlyReflection} isCompleted={false} setReflectionType={setReflectionType} lang={lang} t={t} />
+                    <ReflectionCard type="monthly" icon="🏆" title={t.monthlyReflection} isCompleted={false} setReflectionType={setReflectionType} />
                   )}
                 </div>
               )}
@@ -258,18 +265,10 @@ export function Dashboard({
                     <LogItem 
                       log={log} 
                       onDelete={handleDelete} 
-                      onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
+                      onUpdate={onUpdate} 
                       onTagClick={(tag) => { triggerHaptic('medium'); setActiveTagFilter(prev => prev === tag ? null : tag); }} 
                       onShare={onShare}
-                      lang={lang} 
-                      t={t}
                       getTagColor={getTagColor}
-                      triggerHaptic={triggerHaptic}
-                      formatTimestamp={(ts) => {
-                        if (!ts) return '';
-                        const date = new Date(ts.seconds * 1000);
-                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      }}
                     />
                   </motion.div>
                 ))}
@@ -307,9 +306,6 @@ export function Dashboard({
             >
               <CalendarView 
                 logs={logs} 
-                t={t} 
-                lang={lang} 
-                accentColor={accentColor}
                 onSelectDate={(date) => {
                   triggerHaptic('light');
                   setCalendarSelectedDate(date);
@@ -326,25 +322,26 @@ export function Dashboard({
                     {calendarSelectedDate.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </h3>
                   <div className="space-y-0">
-                    {logs.filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === calendarSelectedDate.toDateString()).length > 0 ? (
+                    {logs.filter(l => {
+                      if (!l.timestamp) return false;
+                      const logDate = l.timestamp.seconds ? new Date(l.timestamp.seconds * 1000) : l.timestamp.toDate();
+                      return logDate.toDateString() === calendarSelectedDate.toDateString();
+                    }).length > 0 ? (
                       logs
-                        .filter(l => l.timestamp && new Date(l.timestamp.seconds * 1000).toDateString() === calendarSelectedDate.toDateString())
+                        .filter(l => {
+                          if (!l.timestamp) return false;
+                          const logDate = l.timestamp.seconds ? new Date(l.timestamp.seconds * 1000) : l.timestamp.toDate();
+                          return logDate.toDateString() === calendarSelectedDate.toDateString();
+                        })
                         .map(log => (
                           <LogItem 
                             key={log.id}
                             log={log} 
                             onDelete={handleDelete} 
-                            onUpdate={(id, txt) => updateDoc(doc(db, 'logs', id), { text: txt })} 
+                            onUpdate={onUpdate} 
                             onTagClick={() => {}} 
                             onShare={onShare}
-                            lang={lang} 
-                            t={t}
                             getTagColor={getTagColor}
-                            triggerHaptic={triggerHaptic}
-                            formatTimestamp={(ts) => {
-                                const date = new Date(ts.seconds * 1000);
-                                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            }}
                           />
                         ))
                     ) : (

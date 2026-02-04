@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toPng } from 'html-to-image';
+import { useApp } from '../context/AppContext';
 
-export function VictoryCard({ isOpen, log, onClose, t, accentColor }) {
+export function VictoryCard({ isOpen, log, onClose }) {
+  const { t, accentColor } = useApp();
   const cardRef = useRef(null);
 
   if (!log) return null;

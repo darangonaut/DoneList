@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useApp } from '../context/AppContext';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-export function AIInsightModal({ isOpen, onClose, logs, t, lang, accentColor }) {
+export function AIInsightModal({ isOpen, onClose, logs }) {
+  const { t, lang, accentColor } = useApp();
   const [insight, setInsight] = useState('');
   const [superpowers, setSuperpowers] = useState([]);
   const [loading, setLoading] = useState(false);

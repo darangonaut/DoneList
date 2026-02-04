@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useApp } from '../context/AppContext';
 
-export function LandingPage({ t, lang, setLang, handleLogin }) {
+export function LandingPage({ handleLogin }) {
+  const { t, lang, setLang } = useApp();
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white selection:bg-[var(--accent-color)]/30 overflow-y-auto scroll-smooth transition-colors duration-500">
       <div className="fixed inset-0 z-0 opacity-30 dark:opacity-40 pointer-events-none">
