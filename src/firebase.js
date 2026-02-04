@@ -8,12 +8,12 @@ import {
 import { getFirestore, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAL2hN40jx6sA9refGF3uNks9Bpd68sanY",
-  authDomain: "donelist-8b4e7.firebaseapp.com",
-  projectId: "donelist-8b4e7",
-  storageBucket: "donelist-8b4e7.firebasestorage.app",
-  messagingSenderId: "73001294102",
-  appId: "1:73001294102:web:fc416b73b630f9f17f1837"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
