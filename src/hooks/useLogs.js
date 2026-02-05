@@ -38,7 +38,6 @@ export function useLogs(user, activeTagFilter) {
     const q = query(
       collection(db, 'logs'), 
       where('userId', '==', user.uid),
-      orderBy('timestamp', 'desc'),
       limit(500)
     );
     const unsub = onSnapshot(q, (sn) => {
@@ -68,6 +67,8 @@ export function useLogs(user, activeTagFilter) {
         }
         return null;
       });
+    }, (err) => {
+      console.error("Firestore error in useLogs:", err);
     });
     return unsub;
   }, [user, activeTagFilter]);

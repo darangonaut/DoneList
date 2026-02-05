@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { translations } from '../translations';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const AppContext = createContext();
 
-export const AppProvider = ({ children, initialSettings }) => {
+export const AppProvider = ({ children, initialSettings, user }) => {
   const [lang, setLang] = useState(initialSettings.lang || 'sk');
   const [accentColor, setAccentColor] = useState(initialSettings.accentColor || '#F97316');
   const [hapticEnabled, setHapticEnabled] = useState(initialSettings.hapticEnabled !== false);
@@ -12,6 +14,40 @@ export const AppProvider = ({ children, initialSettings }) => {
   const [showHeatmap, setShowHeatmap] = useState(initialSettings.showHeatmap !== false);
 
   const t = useMemo(() => translations[lang] || translations.sk, [lang]);
+
+  // Sync state with props when initialSettings (from Firestore) arrive
+  useEffect(() => {
+    if (initialSettings.lang) setLang(initialSettings.lang);
+    if (initialSettings.accentColor) setAccentColor(initialSettings.accentColor);
+    if (initialSettings.hapticEnabled !== undefined) setHapticEnabled(initialSettings.hapticEnabled);
+    if (initialSettings.dailyGoal) setDailyGoal(initialSettings.dailyGoal);
+    if (initialSettings.showStreak !== undefined) setShowStreak(initialSettings.showStreak);
+    if (initialSettings.showHeatmap !== undefined) setShowHeatmap(initialSettings.showHeatmap);
+  }, [initialSettings]);
+
+  // Unified update function to prevent loops
+  const updateSetting = async (key, value) => {
+    // 1. Update local state immediately
+    const setters = {
+      lang: setLang,
+      accentColor: setAccentColor,
+      hapticEnabled: setHapticEnabled,
+      dailyGoal: setDailyGoal,
+      showStreak: setShowStreak,
+      showHeatmap: setShowHeatmap
+    };
+    
+    if (setters[key]) setters[key](value);
+
+    // 2. Persist to Firestore if user is logged in
+    if (user) {
+      try {
+        await setDoc(doc(db, 'userStats', user.uid), { [key]: value }, { merge: true });
+      } catch (e) {
+        console.error("Failed to sync setting:", key, e);
+      }
+    }
+  };
 
   const triggerHaptic = (type = 'light') => {
     if (!hapticEnabled || !window.navigator.vibrate) return;
@@ -39,13 +75,13 @@ export const AppProvider = ({ children, initialSettings }) => {
   }, [accentColor]);
 
   const value = {
-    lang, setLang,
+    lang, setLang: (v) => updateSetting('lang', v),
     t,
-    accentColor, setAccentColor,
-    hapticEnabled, setHapticEnabled,
-    dailyGoal, setDailyGoal,
-    showStreak, setShowStreak,
-    showHeatmap, setShowHeatmap,
+    accentColor, setAccentColor: (v) => updateSetting('accentColor', v),
+    hapticEnabled, setHapticEnabled: (v) => updateSetting('hapticEnabled', v),
+    dailyGoal, setDailyGoal: (v) => updateSetting('dailyGoal', v),
+    showStreak, setShowStreak: (v) => updateSetting('showStreak', v),
+    showHeatmap, setShowHeatmap: (v) => updateSetting('showHeatmap', v),
     triggerHaptic,
     formatTimestamp
   };

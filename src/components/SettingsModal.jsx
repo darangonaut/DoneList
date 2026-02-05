@@ -81,7 +81,7 @@ export function SettingsModal({
                     <span className="text-2xl font-black text-[var(--accent-color)]">{dailyGoal}</span>
                   </div>
                   <input 
-                    type="range" min="1" max="10" value={dailyGoal} 
+                    type="range" min="3" max="10" value={dailyGoal} 
                     onChange={(e) => setDailyGoal(parseInt(e.target.value))}
                     className="w-full accent-[var(--accent-color)]"
                   />

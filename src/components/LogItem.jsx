@@ -85,11 +85,10 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
   return (
     <motion.div 
       whileTap={{ scale: 0.98 }}
-      className={`relative overflow-hidden rounded-[2rem] mb-4 shadow-sm transition-all duration-700 
+      className={`relative overflow-hidden rounded-[2rem] mb-4 shadow-sm 
       ${isMonthlyTop ? 'shadow-[0_20px_50px_rgba(168,85,247,0.25)]' : 
         isWeeklyTop ? 'shadow-[0_15px_40px_rgba(96,165,250,0.2)]' : 
         isTopWin ? 'shadow-[0_10px_30px_rgba(250,204,21,0.15)]' : ''}`}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}
       >
       {/* Animated Border for Special Wins */}
       {isSpecial && (
@@ -98,7 +97,7 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
             opacity: [0.3, 0.6, 0.3],
           }}
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className={`absolute inset-0 rounded-[2rem] z-0 p-[2px]`}
+          className="absolute inset-0 rounded-[2rem] z-0 p-[2px]"
           style={{ 
             background: isMonthlyTop 
               ? 'linear-gradient(45deg, #A855F7, #EC4899, #A855F7)' 
@@ -125,7 +124,7 @@ export const LogItem = memo(function LogItem({ log, onDelete, onUpdate, onTagCli
         onDragEnd={handleDragEnd}
         style={{ x, scale: itemScale }} 
         onClick={() => isSelectable && onSelect(log.id)}
-        className={`bg-apple-card/70 backdrop-blur-2xl p-5 border flex justify-between items-center relative z-10 rounded-[2rem] touch-pan-y transition-colors duration-500
+        className={`bg-apple-card/70 backdrop-blur-2xl p-5 border flex justify-between items-center relative z-10 rounded-[2rem] touch-pan-y
           ${isSelectable ? 'cursor-pointer active:scale-95' : ''} 
           ${isMonthlyTop ? 'border-purple-500/30' : isWeeklyTop ? 'border-blue-400/30' : isTopWin ? 'border-yellow-400/30' : 'border-apple-border/50'}`}
       >

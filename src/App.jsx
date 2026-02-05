@@ -13,7 +13,6 @@ import {
   where, 
   onSnapshot,
   doc, 
-  setDoc,
   writeBatch
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,20 +40,12 @@ const ModalLoading = () => (
   </div>
 );
 
-function AppContent() {
-  const [user, setUser] = useState(null);
+function AppContent({ user, loading, setLoading }) {
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
   
   const { 
-    lang, setLang, t, 
-    accentColor, setAccentColor, 
-    hapticEnabled, setHapticEnabled, 
-    dailyGoal, setDailyGoal,
-    showStreak, setShowStreak,
-    showHeatmap, setShowHeatmap,
-    triggerHaptic 
+    lang, t, accentColor, hapticEnabled, dailyGoal, showStreak, showHeatmap, triggerHaptic 
   } = useApp();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -63,11 +54,9 @@ function AppContent() {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [reflectionType, setReflectionType] = useState(null); 
   const [sharingLog, setSharingLog] = useState(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const inputRef = useRef(null);
 
-  // LOGS HOOK - All data logic is here
   const { 
     logs, streak, heatmapData, memoryLog, 
     addLog, deleteLog, updateLog, selectTopWin, dailyStats, dailyTags 
@@ -76,7 +65,7 @@ function AppContent() {
   const todayLogs = useMemo(() => {
     const today = new Date().toDateString();
     return logs.filter(log => {
-      if (!log.timestamp) return true; // Include optimistic updates
+      if (!log.timestamp) return true;
       return new Date(log.timestamp.seconds * 1000).toDateString() === today;
     });
   }, [logs]);
@@ -187,55 +176,11 @@ function AppContent() {
     }
   };
 
-  useEffect(() => { 
-    localStorage.setItem('lang', lang); 
-    localStorage.setItem('cached_accent', accentColor); 
-    localStorage.setItem('show_streak', showStreak);
-    localStorage.setItem('show_heatmap', showHeatmap);
-    localStorage.setItem('haptic_enabled', hapticEnabled);
-    localStorage.setItem('daily_goal', dailyGoal);
-  }, [accentColor, lang, showStreak, showHeatmap, hapticEnabled, dailyGoal]);
-
-  useEffect(() => {
-    if (user && !isInitialLoad) {
-      setDoc(doc(db, 'userStats', user.uid), { 
-        showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, lang 
-      }, { merge: true });
-    }
-  }, [showStreak, showHeatmap, hapticEnabled, dailyGoal, accentColor, lang, user, isInitialLoad]);
-
   useEffect(() => {
     const handleUpdateAvailable = () => setUpdateAvailable(true);
     window.addEventListener('pwa-update-available', handleUpdateAvailable);
     return () => window.removeEventListener('pwa-update-available', handleUpdateAvailable);
   }, []);
-
-  useEffect(() => {
-    let authUnsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const sRef = doc(db, 'userStats', u.uid);
-        const unsubSettings = onSnapshot(sRef, (s) => {
-          if (s.exists()) {
-            const data = s.data();
-            if (data.showStreak !== undefined) setShowStreak(data.showStreak);
-            if (data.showHeatmap !== undefined) setShowHeatmap(data.showHeatmap);
-            if (data.hapticEnabled !== undefined) setHapticEnabled(data.hapticEnabled);
-            if (data.dailyGoal !== undefined) setDailyGoal(data.dailyGoal);
-            if (data.accentColor !== undefined) setAccentColor(data.accentColor);
-            if (data.lang !== undefined) setLang(data.lang);
-          }
-          setIsInitialLoad(false);
-          setLoading(false);
-        });
-        return () => unsubSettings();
-      } else { 
-        setIsInitialLoad(false);
-        setLoading(false); 
-      }
-    });
-    return () => authUnsub();
-  }, [setAccentColor, setDailyGoal, setHapticEnabled, setLang, setShowHeatmap, setShowStreak]);
 
   if (loading && !user) {
     return (
@@ -304,18 +249,42 @@ function AppContent() {
 }
 
 function App() {
-  const initialSettings = {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [initialSettings, setInitialSettings] = useState(() => ({
     lang: localStorage.getItem('lang') || (navigator.language.startsWith('sk') ? 'sk-SK' : 'en-US'),
     accentColor: localStorage.getItem('cached_accent') || '#F97316',
     hapticEnabled: localStorage.getItem('haptic_enabled') !== 'false',
-    dailyGoal: parseInt(localStorage.getItem('daily_goal')) || 3,
+    dailyGoal: Math.max(parseInt(localStorage.getItem('daily_goal')) || 3, 3),
     showStreak: localStorage.getItem('show_streak') !== 'false',
     showHeatmap: localStorage.getItem('show_heatmap') !== 'false'
-  };
+  }));
+
+  useEffect(() => {
+    const authUnsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        const sRef = doc(db, 'userStats', u.uid);
+        onSnapshot(sRef, (s) => {
+          if (s.exists()) {
+            const data = s.data();
+            setInitialSettings(prev => ({
+              ...prev,
+              ...data
+            }));
+          }
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => authUnsub();
+  }, []);
 
   return (
-    <AppProvider initialSettings={initialSettings}>
-      <AppContent />
+    <AppProvider initialSettings={initialSettings} user={user}>
+      <AppContent user={user} loading={loading} setLoading={setLoading} />
     </AppProvider>
   );
 }
