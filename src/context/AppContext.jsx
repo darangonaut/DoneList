@@ -12,6 +12,7 @@ export const AppProvider = ({ children, initialSettings, user }) => {
   const [dailyGoal, setDailyGoal] = useState(initialSettings.dailyGoal || 3);
   const [showStreak, setShowStreak] = useState(initialSettings.showStreak !== false);
   const [showHeatmap, setShowHeatmap] = useState(initialSettings.showHeatmap !== false);
+  const [showBadge, setShowBadge] = useState(initialSettings.showBadge !== false);
 
   const t = useMemo(() => translations[lang] || translations.sk, [lang]);
 
@@ -23,6 +24,7 @@ export const AppProvider = ({ children, initialSettings, user }) => {
     if (initialSettings.dailyGoal) setDailyGoal(initialSettings.dailyGoal);
     if (initialSettings.showStreak !== undefined) setShowStreak(initialSettings.showStreak);
     if (initialSettings.showHeatmap !== undefined) setShowHeatmap(initialSettings.showHeatmap);
+    if (initialSettings.showBadge !== undefined) setShowBadge(initialSettings.showBadge);
   }, [initialSettings]);
 
   // Unified update function to prevent loops
@@ -34,7 +36,8 @@ export const AppProvider = ({ children, initialSettings, user }) => {
       hapticEnabled: setHapticEnabled,
       dailyGoal: setDailyGoal,
       showStreak: setShowStreak,
-      showHeatmap: setShowHeatmap
+      showHeatmap: setShowHeatmap,
+      showBadge: setShowBadge
     };
     
     if (setters[key]) setters[key](value);
@@ -47,6 +50,17 @@ export const AppProvider = ({ children, initialSettings, user }) => {
         console.error("Failed to sync setting:", key, e);
       }
     }
+  };
+
+  const enableBadges = async () => {
+    if (!('Notification' in window)) return false;
+    
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted' && 'setAppBadge' in navigator) {
+      triggerHaptic('success');
+      return true;
+    }
+    return false;
   };
 
   const triggerHaptic = (type = 'light') => {
@@ -82,8 +96,10 @@ export const AppProvider = ({ children, initialSettings, user }) => {
     dailyGoal, setDailyGoal: (v) => updateSetting('dailyGoal', v),
     showStreak, setShowStreak: (v) => updateSetting('showStreak', v),
     showHeatmap, setShowHeatmap: (v) => updateSetting('showHeatmap', v),
+    showBadge, setShowBadge: (v) => updateSetting('showBadge', v),
     triggerHaptic,
-    formatTimestamp
+    formatTimestamp,
+    enableBadges
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

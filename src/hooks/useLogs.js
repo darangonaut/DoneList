@@ -14,9 +14,43 @@ export function useLogs(user, activeTagFilter) {
   const [dailyTags, setDailyTags] = useState(() => JSON.parse(localStorage.getItem('cached_tags')) || {});
   const [memoryLog, setMemoryLog] = useState(null);
   
-  const { t, dailyGoal, triggerHaptic, accentColor } = useApp();
+  const { t, dailyGoal, triggerHaptic, accentColor, showBadge } = useApp();
 
   const streak = useMemo(() => calculateDynamicStreak(dailyStats), [dailyStats]);
+
+  // Update App Badge (Countdown to Daily Goal)
+  useEffect(() => {
+    const updateBadge = async () => {
+      if ('setAppBadge' in navigator) {
+        if (!showBadge) {
+          await navigator.clearAppBadge();
+          return;
+        }
+
+        const today = new Date().toDateString();
+        const todayCount = logs.filter(l => {
+          if (!l.timestamp) return true;
+          const logDate = l.timestamp.seconds ? new Date(l.timestamp.seconds * 1000) : l.timestamp.toDate();
+          return logDate.toDateString() === today;
+        }).length;
+
+        const remaining = Math.max(0, dailyGoal - todayCount);
+
+        try {
+          if (remaining > 0) {
+            await navigator.setAppBadge(remaining);
+          } else {
+            // Goal reached! Clear the badge as a reward
+            await navigator.clearAppBadge();
+          }
+        } catch (error) {
+          console.warn('Failed to update app badge:', error);
+        }
+      }
+    };
+
+    updateBadge();
+  }, [logs, dailyGoal, showBadge]);
 
   // Sync state with userStats from Firestore
   useEffect(() => {

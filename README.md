@@ -29,6 +29,7 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 - **Activity Heatmap:** A GitHub-style year-long visualization of your consistency, automatically tinted by your dominant category of the day.
 - **Adaptive Aesthetics:** Full support for System Light/Dark modes across the entire app, including an animated storytelling landing page with scientific charts.
 - **Minimalist Constraints:** A 280-character limit with a visual counter keeps your entries concise, powerful, and easy to review.
+- **🔴 App Icon Badges:** A smart PWA feature that shows the number of remaining victories needed to reach your daily goal directly on the app icon (iOS 16.4+ & Android).
 - **iOS Native Feel:** Swipe-to-delete gestures, haptic feedback, and a PWA setup optimized for the "Add to Home Screen" experience.
 
 ## 🛠 Tech Stack
@@ -71,6 +72,7 @@ Most of us suffer from **achievement amnesia**. At the end of the day, we rememb
 - [x] Shareable "Victory Cards" optimized for Instagram Stories.
 - [x] Hierarchical reflections (Day/Week/Month).
 - [x] AI Mentor (Analyze progress and provide motivation).
+- [x] App Icon Badging (Countdown to daily goal).
 - [x] Calendar View for browsing history.
 - [ ] Voice-to-text logging (Siri-style input).
 - [ ] Push Notifications for evening reminders.

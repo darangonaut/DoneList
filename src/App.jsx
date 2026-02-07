@@ -257,7 +257,8 @@ function App() {
     hapticEnabled: localStorage.getItem('haptic_enabled') !== 'false',
     dailyGoal: Math.max(parseInt(localStorage.getItem('daily_goal')) || 3, 3),
     showStreak: localStorage.getItem('show_streak') !== 'false',
-    showHeatmap: localStorage.getItem('show_heatmap') !== 'false'
+    showHeatmap: localStorage.getItem('show_heatmap') !== 'false',
+    showBadge: localStorage.getItem('show_badge') !== 'false'
   }));
 
   useEffect(() => {

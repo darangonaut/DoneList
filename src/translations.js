@@ -71,6 +71,7 @@ export const translations = {
     goalReached: "Cieľ splnený! Si úžasný. 🎯",
     goalProgress: "Dnes: {count} z {goal} víťazstiev",
     hapticFeedback: "Haptika a zvuky",
+    showBadge: "Odznak na ikonke",
     aiMotivator: "AI Motivátor",
     aiLoading: "Magická analýza prebieha...",
     aiError: "Ups, AI sa niekde zamotalo. Skús to neskôr.",

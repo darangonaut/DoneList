@@ -21,8 +21,19 @@ export function SettingsModal({
     hapticEnabled, setHapticEnabled,
     dailyGoal, setDailyGoal,
     showStreak, setShowStreak,
-    showHeatmap, setShowHeatmap
+    showHeatmap, setShowHeatmap,
+    showBadge, setShowBadge,
+    enableBadges
   } = useApp();
+
+  const [notificationPermission, setNotificationPermission] = React.useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+
+  const handleEnableBadges = async () => {
+    const result = await enableBadges();
+    if (result) setNotificationPermission('granted');
+  };
 
   const Toggle = ({ label, value, onChange }) => (
     <div className="flex justify-between items-center p-4 border-b border-apple-border last:border-0">
@@ -95,6 +106,18 @@ export function SettingsModal({
                   <Toggle label={lang === 'sk' ? 'Zobraziť sériu (🔥)' : 'Show Streak'} value={showStreak} onChange={setShowStreak} />
                   <Toggle label={lang === 'sk' ? 'Zobraziť heatmapu' : 'Show Heatmap'} value={showHeatmap} onChange={setShowHeatmap} />
                   <Toggle label={t.hapticFeedback} value={hapticEnabled} onChange={setHapticEnabled} />
+                  
+                  {notificationPermission === 'granted' ? (
+                    <Toggle label={t.showBadge} value={showBadge} onChange={setShowBadge} />
+                  ) : (
+                    <button 
+                      onClick={handleEnableBadges}
+                      className="w-full p-4 flex justify-between items-center active:bg-apple-border/10 transition-colors border-t border-apple-border"
+                    >
+                      <span className="text-[17px] text-apple-text font-medium">{lang === 'sk' ? 'Povoliť odznak na ikonke' : 'Enable Icon Badge'}</span>
+                      <span className="text-blue-500 font-bold text-sm">{lang === 'sk' ? 'Povoliť' : 'Allow'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
