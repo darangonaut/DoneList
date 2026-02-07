@@ -4,36 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="description" content="DoneList - Minimalistický psychologický nástroj na sledovanie denných úspechov a budovanie sebavedomia." />
-    <link rel="preconnect" href="https://www.googleapis.com" />
-    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
-    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://donelist-8b4e7.firebaseapp.com/" />
+    <meta property="og:title" content="DoneList - Váš denník víťazstiev" />
+    <meta property="og:description" content="Sledujte svoje úspechy, budujte návyky a porazte amnéziu úspechov." />
+    <meta property="og:image" content="https://donelist-8b4e7.firebaseapp.com/icon.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="DoneList" />
+    <meta property="twitter:description" content="Sledujte svoje úspechy každý deň." />
+
+    <link rel="preconnect" href="https://www.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    
     <title>DoneList</title>
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon.png" />
     <meta name="apple-mobile-web-app-title" content="DoneList" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
     <style>
-      body { background-color: #F2F2F7; margin: 0; font-family: sans-serif; }
-      #debug-error { 
-        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-        background: white; color: red; padding: 20px; z-index: 9999; overflow: auto;
+      :root { --apple-bg: #F2F2F7; }
+      @media (prefers-color-scheme: dark) { :root { --apple-bg: #000000; } }
+      body { 
+        background-color: var(--apple-bg); 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-display: swap;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
+      #root { flex: 1; display: flex; flex-direction: column; }
     </style>
-    <script>
-      window.onerror = function(msg, url, line) {
-        var el = document.getElementById('debug-error');
-        if (el) {
-          el.style.display = 'block';
-          el.innerHTML += '<p>CHYBA: ' + msg + '<br>Linka: ' + line + '</p>';
-        }
-      };
-    </script>
   </head>
   <body>
-    <div id="debug-error"><h1>Aplikácia narazila na problém:</h1></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

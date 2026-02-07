@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogItem } from './LogItem';
 import { CalendarView } from './CalendarView';
 import { useApp } from '../context/AppContext';
+import { useLogs } from '../hooks/useLogs';
+import { getTagColor } from '../utils/stats';
 
 const MAX_LENGTH = 280;
 
@@ -36,7 +38,7 @@ const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType }) =
 const MemoryCard = ({ log, setShowMemory, onShare }) => {
   const { t, lang } = useApp();
   if (!log) return null;
-  const date = new Date(log.timestamp.seconds * 1000);
+  const date = new Date(log.timestamp?.seconds * 1000 || Date.now());
   const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
   
   const isVeryOld = (new Date().getTime() - date.getTime()) > 7 * 24 * 60 * 60 * 1000;
@@ -74,26 +76,30 @@ const MemoryCard = ({ log, setShowMemory, onShare }) => {
 };
 
 export function Dashboard({ 
-  user, logs, streak, heatmapData, 
-  activeTagFilter, setActiveTagFilter, getTagColor,
-  isEvening, isSunday, isLastDayOfMonth, hasDailyTop, hasWeeklyTop, hasMonthlyTop,
-  setIsSettingsOpen, setReflectionType, setIsAIModalOpen, handleDelete, onUpdate,
-  isInputExpanded, setIsInputExpanded, inputText, setInputText, addLog, inputRef, 
-  hasMore, setLimitCount, onShare,
-  memoryLog
+  user, setIsSettingsOpen, setReflectionType, setIsAIModalOpen, onShare
 }) {
   const { t, lang, accentColor, dailyGoal, triggerHaptic, showStreak, showHeatmap } = useApp();
+  const [activeTagFilter, setActiveTagFilter] = useState(null);
+  
+  // Load data via hook
+  const { 
+    logs, streak, heatmapData, memoryLog, 
+    addLog: firestoreAddLog, deleteLog, updateLog 
+  } = useLogs(user, activeTagFilter);
+
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(null);
   const [isHeatmapExpanded, setIsHeatmapExpanded] = useState(false);
   const [showMemory, setShowMemory] = useState(true);
+  const [isInputExpanded, setIsInputExpanded] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const inputRef = useRef(null);
 
   const remainingChars = MAX_LENGTH - inputText.length;
   const isCloseToLimit = remainingChars <= 20;
   const isOverLimit = remainingChars < 0;
 
   const todayLogsList = logs.filter(log => {
-    // Latency compensation: if timestamp is null, it's a new log from "just now"
     if (!log.timestamp) return true;
     const date = new Date(log.timestamp.seconds * 1000);
     return date.toDateString() === new Date().toDateString();
@@ -102,11 +108,37 @@ export function Dashboard({
   const todayCount = todayLogsList.length;
   const isGoalReached = todayCount >= dailyGoal;
 
+  // Reflection checks
+  const hour = new Date().getHours();
+  const isEvening = hour >= 10; // Unlocked after 10 AM as per blueprint
+  const today = new Date();
+  const isSunday = today.getDay() === 0;
+  const isLastDayOfMonth = () => {
+    const nextDay = new Date(today.getTime() + 86400000);
+    return nextDay.getDate() === 1;
+  };
+
+  const hasDailyTop = logs.some(l => l.isTopWin && new Date(l.timestamp?.seconds * 1000).toDateString() === today.toDateString());
+  // Simplified weekly/monthly checks for UI
+  const hasWeeklyTop = logs.some(l => l.isWeeklyTop); 
+  const hasMonthlyTop = logs.some(l => l.isMonthlyTop);
+
+  const handleAddLog = async (e) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim() || isOverLimit) return;
+    
+    const res = await firestoreAddLog(inputText);
+    if (res && !res.error) {
+      setInputText('');
+      setIsInputExpanded(false);
+    }
+  };
+
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    const name = user.displayName.split(' ')[0];
-    if (hour < 10) return `${t.greetingMorning}, ${name} 🌅`;
-    if (hour < 18) return `${t.greetingDay}, ${name} ✨`;
+    const h = new Date().getHours();
+    const name = user?.displayName?.split(' ')[0] || 'Priateľ';
+    if (h < 10) return `${t.greetingMorning}, ${name} 🌅`;
+    if (h < 18) return `${t.greetingDay}, ${name} ✨`;
     return `${t.greetingEvening}, ${name} 🌙`;
   };
 
@@ -264,8 +296,8 @@ export function Dashboard({
                   <motion.div key={log.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}>
                     <LogItem 
                       log={log} 
-                      onDelete={handleDelete} 
-                      onUpdate={onUpdate} 
+                      onDelete={deleteLog} 
+                      onUpdate={updateLog} 
                       onTagClick={(tag) => { triggerHaptic('medium'); setActiveTagFilter(prev => prev === tag ? null : tag); }} 
                       onShare={onShare}
                       getTagColor={getTagColor}
@@ -282,7 +314,7 @@ export function Dashboard({
                 >
                   <div className="text-5xl mb-6 opacity-20 italic">✨</div>
                   <h3 className="text-xl font-bold text-apple-text mb-2">
-                    {t.emptyStateTitle.replace('{name}', user.displayName.split(' ')[0])}
+                    {t.emptyStateTitle.replace('{name}', user?.displayName?.split(' ')[0] || '')}
                   </h3>
                   <p className="text-apple-secondary text-[15px] leading-relaxed italic">
                     {t.emptyStateSub}
@@ -337,8 +369,8 @@ export function Dashboard({
                           <LogItem 
                             key={log.id}
                             log={log} 
-                            onDelete={handleDelete} 
-                            onUpdate={onUpdate} 
+                            onDelete={deleteLog} 
+                            onUpdate={updateLog} 
                             onTagClick={() => {}} 
                             onShare={onShare}
                             getTagColor={getTagColor}
@@ -384,13 +416,7 @@ export function Dashboard({
                 </div>
                 
                 <form 
-                  onSubmit={(e) => {
-                    triggerHaptic('success');
-                    const el = e.currentTarget;
-                    el.style.filter = 'brightness(1.5) saturate(1.2)';
-                    setTimeout(() => el.style.filter = '', 200);
-                    addLog(e);
-                  }} 
+                  onSubmit={handleAddLog} 
                   className="flex-1 flex flex-col justify-center gap-12"
                 >
                   <div className="relative">
@@ -403,7 +429,7 @@ export function Dashboard({
                       className="w-full bg-transparent border-none text-3xl md:text-4xl font-black text-apple-text placeholder:text-apple-secondary/20 focus:ring-0 outline-none resize-none min-h-[150px] text-center" 
                       onKeyDown={(e) => { 
                         if (e.key === 'Enter' && !e.shiftKey) { 
-                          if (!isOverLimit) { e.preventDefault(); addLog(); } 
+                          if (!isOverLimit) { e.preventDefault(); handleAddLog(); } 
                           else { e.preventDefault(); triggerHaptic('medium'); }
                         } 
                         if (e.key === 'Escape') setIsInputExpanded(false); 

@@ -5,7 +5,7 @@ import {
   indexedDBLocalPersistence,
   setPersistence
 } from "firebase/auth";
-import { getFirestore, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,18 +20,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // IndexedDB is the most stable for PWA/iOS
-setPersistence(auth, indexedDBLocalPersistence).catch(err => console.error(err));
+setPersistence(auth, indexedDBLocalPersistence).catch(err => {});
 
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
 
-// Enable Firestore offline persistence
-enableMultiTabIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a a time.
-        console.warn('Firestore persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-        // The current browser does not support all of the features required to enable persistence
-        console.warn('Firestore persistence failed: Browser not supported');
-    }
+// Modern Firestore initialization with improved caching
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 });
