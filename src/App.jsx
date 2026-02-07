@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { auth, googleProvider, db } from './firebase';
 import { 
   signInWithRedirect, 
@@ -10,13 +10,12 @@ import {
   onSnapshot,
   doc, 
 } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
 import { AppProvider, useApp } from './context/AppContext';
 
-// Core Components (Always needed)
+// Core Components (Critical Path)
 import { LandingPage } from './components/LandingPage';
 
-// Heavy Components (Lazy Loaded)
+// Heavy Components (Lazy Loaded & Code Split)
 const Dashboard = React.lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
 const BackgroundBlobs = React.lazy(() => import('./components/BackgroundBlobs').then(module => ({ default: module.BackgroundBlobs })));
 const SettingsModal = React.lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
@@ -33,9 +32,7 @@ const ModalLoading = () => (
   </div>
 );
 
-function AppContent({ user, loading, handleLogin, handleLogout }) {
-  const { lang, t, accentColor } = useApp();
-
+function PrivateApp({ user, handleLogout }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [reflectionType, setReflectionType] = useState(null); 
@@ -48,49 +45,53 @@ function AppContent({ user, loading, handleLogin, handleLogout }) {
     return () => window.removeEventListener('pwa-update-available', handleUpdateAvailable);
   }, []);
 
-  if (loading) {
+  return (
+    <Suspense fallback={<ModalLoading />}>
+      <div className="min-h-screen bg-apple-bg transition-colors duration-500 relative overflow-x-hidden">
+        <BackgroundBlobs />
+        <Dashboard 
+          user={user} 
+          setIsSettingsOpen={setIsSettingsOpen} 
+          setReflectionType={setReflectionType}
+          setIsAIModalOpen={setIsAIModalOpen}
+          onShare={(log) => setSharingLog(log)}
+        />
+
+        <Suspense fallback={null}>
+          <SettingsModal 
+            isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
+            handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
+            updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
+          />
+          <ReflectionModal 
+            isOpen={!!reflectionType} type={reflectionType} 
+            onClose={() => setReflectionType(null)}
+          />
+          <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
+          <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} />
+        </Suspense>
+      </div>
+    </Suspense>
+  );
+}
+
+function AppContent({ user, loading, handleLogin, handleLogout }) {
+  if (loading && !user) {
     return (
       <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center transition-colors duration-500">
-        <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold">D</div>
+        <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold animate-pulse">D</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-apple-bg transition-colors duration-500 selection:bg-[var(--accent-color)] selection:text-white relative">
-      <main>
-        {!user ? (
-          <LandingPage handleLogin={handleLogin} />
-        ) : (
-          <Suspense fallback={<ModalLoading />}>
-            <div className="min-h-screen bg-apple-bg transition-colors duration-500">
-              <BackgroundBlobs />
-              <Dashboard 
-                user={user} 
-                setIsSettingsOpen={setIsSettingsOpen} 
-                setReflectionType={setReflectionType}
-                setIsAIModalOpen={setIsAIModalOpen}
-                onShare={(log) => setSharingLog(log)}
-              />
-
-              <Suspense fallback={<ModalLoading />}>
-                <SettingsModal 
-                  isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
-                  handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
-                  updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
-                />
-                <ReflectionModal 
-                  isOpen={!!reflectionType} type={reflectionType} 
-                  onClose={() => setReflectionType(null)}
-                />
-                <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
-                <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} />
-              </Suspense>
-            </div>
-          </Suspense>
-        )}
-      </main>
-    </div>
+    <main className="min-h-screen bg-apple-bg">
+      {!user ? (
+        <LandingPage handleLogin={handleLogin} />
+      ) : (
+        <PrivateApp user={user} handleLogout={handleLogout} />
+      )}
+    </main>
   );
 }
 
@@ -110,7 +111,6 @@ function App() {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      setTimeout(() => { if (loading) setLoading(false); }, 10000);
       await signInWithRedirect(auth, googleProvider);
     } catch (e) {
       console.error("Login Error", e);
@@ -122,11 +122,11 @@ function App() {
     signOut(auth);
     localStorage.removeItem('cached_stats');
     localStorage.removeItem('cached_tags');
+    setUser(null);
   };
 
   useEffect(() => {
-    getRedirectResult(auth).catch(e => console.error("Redirect check error:", e));
-
+    // Only check auth state once per mount
     const authUnsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (u) {
@@ -142,8 +142,10 @@ function App() {
       }
     });
 
-    const timer = setTimeout(() => setLoading(false), 5000);
-    return () => { authUnsub(); clearTimeout(timer); };
+    // Handle redirect results silently
+    getRedirectResult(auth).catch(() => {});
+
+    return () => authUnsub();
   }, []);
 
   return (
