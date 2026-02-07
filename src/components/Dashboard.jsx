@@ -8,6 +8,23 @@ import { getTagColor } from '../utils/stats';
 
 const MAX_LENGTH = 280;
 
+const PraiseToast = ({ message, accentColor }) => (
+  <motion.div 
+    initial={{ y: -100, opacity: 0, scale: 0.5 }}
+    animate={{ y: 0, opacity: 1, scale: 1 }}
+    exit={{ y: -100, opacity: 0, scale: 0.5 }}
+    className="fixed top-8 left-0 right-0 z-[1000] flex justify-center pointer-events-none"
+  >
+    <div 
+      style={{ backgroundColor: accentColor }}
+      className="px-6 py-3 rounded-full shadow-2xl text-white font-black text-lg flex items-center gap-2 border-2 border-white/20"
+    >
+      <span role="img" aria-hidden="true">✨</span>
+      {message}
+    </div>
+  </motion.div>
+);
+
 const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType }) => {
   const { t } = useApp();
   return (
@@ -25,7 +42,7 @@ const ReflectionCard = ({ type, icon, title, isCompleted, setReflectionType }) =
       <div className="flex items-center gap-4">
         <span className={`text-3xl ${!isCompleted ? 'animate-pulse' : ''}`} role="img" aria-hidden="true">{icon}</span>
         <div className="text-left">
-          <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary/90 mb-0.5">{t.reflectionTime}</p>
+          <p className="text-[13px] font-bold uppercase tracking-widest text-apple-secondary mb-0.5">{t.reflectionTime}</p>
           <h3 className="text-xl font-bold text-apple-text">{title}</h3>
         </div>
       </div>
@@ -92,6 +109,8 @@ export function Dashboard({
   const [showMemory, setShowMemory] = useState(true);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [praise, setPraise] = useState(null);
+  const [isVictoryFlash, setIsVictoryFlash] = useState(false);
   const inputRef = useRef(null);
 
   const remainingChars = MAX_LENGTH - inputText.length;
@@ -124,11 +143,26 @@ export function Dashboard({
     if (e) e.preventDefault();
     if (!inputText.trim() || isOverLimit) return;
     
-    const res = await firestoreAddLog(inputText);
-    if (res && !res.error) {
-      setInputText('');
-      setIsInputExpanded(false);
-    }
+    const textToSave = inputText;
+    setInputText('');
+    setIsInputExpanded(false);
+    
+    // Optimistic UI visual feedback
+    setIsVictoryFlash(true);
+    triggerHaptic('success');
+    
+    const randomPraise = t.motivations[Math.floor(Math.random() * t.motivations.length)];
+    setPraise(randomPraise);
+    
+    setTimeout(() => {
+      setIsVictoryFlash(false);
+    }, 1000);
+    
+    setTimeout(() => {
+      setPraise(null);
+    }, 3000);
+
+    await firestoreAddLog(textToSave);
   };
 
   const getGreeting = () => {
@@ -141,11 +175,27 @@ export function Dashboard({
 
   return (
     <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
+      <AnimatePresence>
+        {praise && <PraiseToast message={praise} accentColor={accentColor} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isVictoryFlash && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.15 }}
+            exit={{ opacity: 0 }}
+            style={{ backgroundColor: accentColor }}
+            className="fixed inset-0 z-[1000] pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
+
       <header className="pt-12 pb-4 sticky top-0 bg-apple-bg/60 backdrop-blur-xl z-30 border-b border-apple-border/30 -mx-6 px-6 text-left">
         <div className="flex justify-between items-start mb-6 text-left">
           <motion.div layout className="text-left flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap justify-start">
-              <p className="text-xs font-black text-apple-secondary uppercase tracking-[0.15em]">
+              <p className="text-[13px] font-black text-apple-secondary uppercase tracking-[0.15em]">
                 {new Date().toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-US', { day: 'numeric', month: 'long' })}
               </p>
               
@@ -180,7 +230,7 @@ export function Dashboard({
                     className="h-full bg-[var(--accent-color)]"
                   />
                 </div>
-                <p className={`text-[13px] font-black tracking-wider transition-colors duration-500 ${isGoalReached ? 'text-green-600 dark:text-green-400' : 'text-apple-secondary/90'}`}>
+                <p className={`text-[13px] font-black tracking-wider transition-colors duration-500 ${isGoalReached ? 'text-green-600 dark:text-green-400' : 'text-apple-secondary'}`}>
                   {isGoalReached ? t.goalReached : `${todayCount} / ${dailyGoal}`}
                 </p>
               </div>
@@ -205,7 +255,7 @@ export function Dashboard({
             <button 
               onClick={() => { triggerHaptic('light'); setIsHeatmapExpanded(!isHeatmapExpanded); }}
               aria-expanded={isHeatmapExpanded}
-              className="text-[10px] font-black uppercase tracking-[0.2em] text-apple-secondary/90 flex items-center gap-1.5 hover:text-apple-text transition-colors mb-2"
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-apple-secondary flex items-center gap-1.5 hover:text-apple-text transition-colors mb-2"
             >
               <span>{t.activity}</span>
               <motion.span aria-hidden="true" animate={{ rotate: isHeatmapExpanded ? 180 : 0 }}>↓</motion.span>
@@ -235,14 +285,14 @@ export function Dashboard({
       <div className="flex justify-start my-6 gap-6 border-b border-apple-border/30">
         <button 
           onClick={() => { triggerHaptic('light'); setView('list'); setCalendarSelectedDate(null); }}
-          className={`pb-2 text-sm font-black transition-all relative ${view === 'list' ? 'text-apple-text' : 'text-apple-secondary/80'}`}
+          className={`pb-2 text-sm font-black transition-all relative ${view === 'list' ? 'text-apple-text' : 'text-apple-secondary'}`}
         >
           {view === 'list' && <motion.div layoutId="view-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />}
           {t.viewList}
         </button>
         <button 
           onClick={() => { triggerHaptic('light'); setView('calendar'); }}
-          className={`pb-2 text-sm font-black transition-all relative ${view === 'calendar' ? 'text-apple-text' : 'text-apple-secondary/80'}`}
+          className={`pb-2 text-sm font-black transition-all relative ${view === 'calendar' ? 'text-apple-text' : 'text-apple-secondary'}`}
         >
           {view === 'calendar' && <motion.div layoutId="view-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />}
           {t.viewCalendar}

@@ -174,7 +174,7 @@ export function SettingsModal({
                 <div className="bg-apple-card/80 rounded-2xl border border-apple-border overflow-hidden">
                   <div className="p-4 flex justify-between items-center border-b border-apple-border">
                     <span className="text-[17px] text-apple-text font-medium">{lang === 'sk' ? 'Verzia' : 'Version'}</span>
-                    <span className="text-apple-secondary">1.2.5</span>
+                    <span className="text-apple-secondary">1.2.8</span>
                   </div>
                   <button 
                     onClick={() => {

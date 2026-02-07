@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, memo } from 'react';
 import { auth, db } from './firebase';
 import { AppProvider } from './context/AppContext';
 
@@ -22,7 +22,7 @@ const ModalLoading = () => (
   </div>
 );
 
-function PrivateApp({ user, handleLogout }) {
+const PrivateApp = memo(function PrivateApp({ user, handleLogout }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [reflectionType, setReflectionType] = useState(null); 
@@ -36,9 +36,9 @@ function PrivateApp({ user, handleLogout }) {
   }, []);
 
   return (
-    <Suspense fallback={<ModalLoading />}>
-      <div className="min-h-screen bg-apple-bg transition-colors duration-500 relative overflow-x-hidden">
-        <BackgroundBlobs />
+    <div className="min-h-screen bg-apple-bg transition-colors duration-500 relative overflow-x-hidden">
+      <Suspense fallback={null}><BackgroundBlobs /></Suspense>
+      <Suspense fallback={<ModalLoading />}>
         <Dashboard 
           user={user} 
           setIsSettingsOpen={setIsSettingsOpen} 
@@ -46,24 +46,24 @@ function PrivateApp({ user, handleLogout }) {
           setIsAIModalOpen={setIsAIModalOpen}
           onShare={(log) => setSharingLog(log)}
         />
+      </Suspense>
 
-        <Suspense fallback={null}>
-          <SettingsModal 
-            isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
-            handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
-            updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
-          />
-          <ReflectionModal 
-            isOpen={!!reflectionType} type={reflectionType} 
-            onClose={() => setReflectionType(null)}
-          />
-          <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
-          <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} />
-        </Suspense>
-      </div>
-    </Suspense>
+      <Suspense fallback={null}>
+        <SettingsModal 
+          isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
+          handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
+          updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
+        />
+        <ReflectionModal 
+          isOpen={!!reflectionType} type={reflectionType} 
+          onClose={() => setReflectionType(null)}
+        />
+        <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
+        <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} />
+      </Suspense>
+    </div>
   );
-}
+});
 
 function App() {
   const [user, setUser] = useState(null);
@@ -106,7 +106,6 @@ function App() {
       const { onAuthStateChanged, getRedirectResult } = await import('firebase/auth');
       const { onSnapshot, doc } = await import('firebase/firestore');
 
-      // Silently handle redirect
       getRedirectResult(auth).catch(() => {});
 
       authUnsub = onAuthStateChanged(auth, (u) => {
@@ -125,9 +124,7 @@ function App() {
       });
     };
 
-    // Delay auth initialization slightly to prioritize Landing Page rendering
-    const timer = setTimeout(initAuth, 100);
-
+    const timer = setTimeout(initAuth, 50);
     return () => {
       if (authUnsub) authUnsub();
       if (statsUnsub) statsUnsub();
@@ -138,9 +135,15 @@ function App() {
   return (
     <AppProvider initialSettings={initialSettings} user={user}>
       <main className="min-h-screen bg-apple-bg">
-        {loading && !user ? (
-          <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold animate-pulse">D</div>
+        {loading ? (
+          <div className="h-screen flex items-center justify-center">
+            <div 
+              className="w-16 h-16 rounded-2xl shadow-2xl transition-all duration-700"
+              style={{ 
+                background: initialSettings.accentColor,
+                boxShadow: `0 10px 30px ${initialSettings.accentColor}33`
+              }} 
+            />
           </div>
         ) : !user ? (
           <LandingPage handleLogin={handleLogin} />
