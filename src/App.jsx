@@ -40,7 +40,7 @@ const ModalLoading = () => (
   </div>
 );
 
-function AppContent({ user, loading, setLoading }) {
+function AppContent({ user, loading, handleLogin, handleLogout }) {
   const [inputText, setInputText] = useState('');
   const [feedback, setFeedback] = useState('');
   
@@ -100,25 +100,6 @@ function AppContent({ user, loading, setLoading }) {
   };
   const isEvening = new Date().getHours() >= 10;
 
-  const handleLogin = async () => { 
-    setLoading(true); 
-    try {
-      await signInWithRedirect(auth, googleProvider);
-    } catch (e) {
-      console.error("Login Error", e);
-      setFeedback("Prihlásenie zlyhalo. Skús to znova.");
-      setLoading(false);
-      setTimeout(() => setFeedback(''), 4000);
-    }
-  };
-  
-  const handleLogout = () => { 
-    setIsSettingsOpen(false); 
-    signOut(auth); 
-    localStorage.removeItem('cached_stats');
-    localStorage.removeItem('cached_tags');
-  };
-
   const exportData = () => {
     const data = {
       user: { name: user.displayName, email: user.email },
@@ -137,7 +118,6 @@ function AppContent({ user, loading, setLoading }) {
 
   const deleteAllData = async () => {
     if (!window.confirm(t.deleteWarning)) return;
-    setLoading(true);
     try {
       const q = query(collection(db, 'logs'), where('userId', '==', user.uid));
       const sn = await getDocs(q);
@@ -148,7 +128,6 @@ function AppContent({ user, loading, setLoading }) {
       setFeedback('História bola vymazaná. Čistý štít! ✨');
       setTimeout(() => setFeedback(''), 4000);
     } catch (e) { console.error(e); }
-    setLoading(false);
   };
 
   const handleAddLog = async (e) => {
@@ -182,7 +161,7 @@ function AppContent({ user, loading, setLoading }) {
     return () => window.removeEventListener('pwa-update-available', handleUpdateAvailable);
   }, []);
 
-  if (loading && !user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center transition-colors duration-500">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6">
@@ -222,7 +201,8 @@ function AppContent({ user, loading, setLoading }) {
 
           <Suspense fallback={<ModalLoading />}>
             <SettingsModal 
-              isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} handleLogout={handleLogout}
+              isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
+              handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
               exportData={exportData} deleteAllData={deleteAllData} updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
             />
             <ReflectionModal 
@@ -261,18 +241,40 @@ function App() {
     showBadge: localStorage.getItem('show_badge') !== 'false'
   }));
 
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      // Small timeout to prevent UI getting stuck if Firebase is slow
+      setTimeout(() => { if (loading) setLoading(false); }, 10000);
+      await signInWithRedirect(auth, googleProvider);
+    } catch (e) {
+      console.error("Login Error", e);
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    signOut(auth);
+    localStorage.removeItem('cached_stats');
+    localStorage.removeItem('cached_tags');
+  };
+
   useEffect(() => {
-    const authUnsub = onAuthStateChanged(auth, async (u) => {
+    // 1. Process redirect result
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        console.log("Logged in via redirect:", result.user.email);
+      }
+    }).catch(e => console.error("Redirect check error:", e));
+
+    // 2. Listen for auth changes
+    const authUnsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (u) {
         const sRef = doc(db, 'userStats', u.uid);
         onSnapshot(sRef, (s) => {
           if (s.exists()) {
-            const data = s.data();
-            setInitialSettings(prev => ({
-              ...prev,
-              ...data
-            }));
+            setInitialSettings(prev => ({ ...prev, ...s.data() }));
           }
           setLoading(false);
         });
@@ -280,12 +282,19 @@ function App() {
         setLoading(false);
       }
     });
-    return () => authUnsub();
+
+    // 3. Absolute fail-safe: remove loading after 5 seconds if still stuck
+    const timer = setTimeout(() => setLoading(false), 5000);
+
+    return () => {
+      authUnsub();
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
     <AppProvider initialSettings={initialSettings} user={user}>
-      <AppContent user={user} loading={loading} setLoading={setLoading} />
+      <AppContent user={user} loading={loading} handleLogin={handleLogin} handleLogout={handleLogout} />
     </AppProvider>
   );
 }

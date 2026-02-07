@@ -64,18 +64,26 @@ export const AppProvider = ({ children, initialSettings, user }) => {
   };
 
   const triggerHaptic = (type = 'light') => {
-    if (!hapticEnabled || !window.navigator.vibrate) return;
-    const patterns = { light: 10, medium: 20, success: [10, 30, 10] };
-    window.navigator.vibrate(patterns[type] || 10);
+    if (!hapticEnabled) return;
+
+    // 1. Physical vibration (Android/Chrome only)
+    if (window.navigator && window.navigator.vibrate) {
+      const patterns = { light: 10, medium: 20, success: [10, 30, 10] };
+      window.navigator.vibrate(patterns[type] || 10);
+    }
     
+    // 2. Sound UX (Simulated haptics for iOS)
     const sounds = {
-      light: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
-      medium: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-      success: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'
+      light: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Subtle click
+      medium: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Pop
+      success: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3' // Sparkle/Chime
     };
+
     const audio = new Audio(sounds[type]);
     audio.volume = type === 'success' ? 0.3 : 0.15;
-    audio.play().catch(() => {});
+    audio.play().catch(() => {
+      // Browsers block autoplay audio without user interaction
+    });
   };
 
   const formatTimestamp = (ts) => {
