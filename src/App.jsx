@@ -21,7 +21,7 @@ import { useLogs } from './hooks/useLogs';
 import { getLocalDateKey, getTagColor } from './utils/stats';
 
 // Components
-import { BackgroundBlobs } from './components/BackgroundBlobs';
+const BackgroundBlobs = React.lazy(() => import('./components/BackgroundBlobs').then(module => ({ default: module.BackgroundBlobs })));
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
 
@@ -185,7 +185,9 @@ function AppContent({ user, loading, handleLogin, handleLogout }) {
         <LandingPage handleLogin={handleLogin} />
       ) : (
         <div className="min-h-screen bg-apple-bg transition-colors duration-500">
-          <BackgroundBlobs />
+          <Suspense fallback={null}>
+            <BackgroundBlobs />
+          </Suspense>
           <Dashboard 
             user={user} logs={logs} streak={streak} heatmapData={heatmapData} 
             activeTagFilter={activeTagFilter} setActiveTagFilter={setActiveTagFilter} getTagColor={getTagColor}

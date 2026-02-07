@@ -111,7 +111,7 @@ export function Dashboard({
   };
 
   return (
-    <div className="max-w-xl mx-auto px-6 relative z-10 text-left">
+    <main className="max-w-xl mx-auto px-6 relative z-10 text-left">
       <header className="pt-12 pb-4 sticky top-0 bg-apple-bg/60 backdrop-blur-xl z-30 border-b border-apple-border/30 -mx-6 px-6 text-left">
         <div className="flex justify-between items-start mb-6 text-left">
           <motion.div layout className="text-left flex-1 pr-4">
@@ -430,6 +430,6 @@ export function Dashboard({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </main>
   );
 }
