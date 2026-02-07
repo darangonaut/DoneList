@@ -1,16 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { auth, googleProvider, db } from './firebase';
-import { 
-  signInWithRedirect, 
-  getRedirectResult, 
-  onAuthStateChanged, 
-  signOut,
-} from 'firebase/auth';
-import { 
-  onSnapshot,
-  doc, 
-} from 'firebase/firestore';
-import { AppProvider, useApp } from './context/AppContext';
+import { auth, db } from './firebase';
+import { AppProvider } from './context/AppContext';
 
 // Core Components (Critical Path)
 import { LandingPage } from './components/LandingPage';
@@ -75,26 +65,6 @@ function PrivateApp({ user, handleLogout }) {
   );
 }
 
-function AppContent({ user, loading, handleLogin, handleLogout }) {
-  if (loading && !user) {
-    return (
-      <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center transition-colors duration-500">
-        <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold animate-pulse">D</div>
-      </div>
-    );
-  }
-
-  return (
-    <main className="min-h-screen bg-apple-bg">
-      {!user ? (
-        <LandingPage handleLogin={handleLogin} />
-      ) : (
-        <PrivateApp user={user} handleLogout={handleLogout} />
-      )}
-    </main>
-  );
-}
-
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +81,8 @@ function App() {
   const handleLogin = async () => {
     setLoading(true);
     try {
+      const { signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
+      const googleProvider = new GoogleAuthProvider();
       await signInWithRedirect(auth, googleProvider);
     } catch (e) {
       console.error("Login Error", e);
@@ -118,39 +90,64 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth);
+  const handleLogout = async () => {
+    const { signOut } = await import('firebase/auth');
+    await signOut(auth);
     localStorage.removeItem('cached_stats');
     localStorage.removeItem('cached_tags');
     setUser(null);
   };
 
   useEffect(() => {
-    // Only check auth state once per mount
-    const authUnsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      if (u) {
-        const sRef = doc(db, 'userStats', u.uid);
-        onSnapshot(sRef, (s) => {
-          if (s.exists()) {
-            setInitialSettings(prev => ({ ...prev, ...s.data() }));
-          }
+    let authUnsub;
+    let statsUnsub;
+
+    const initAuth = async () => {
+      const { onAuthStateChanged, getRedirectResult } = await import('firebase/auth');
+      const { onSnapshot, doc } = await import('firebase/firestore');
+
+      // Silently handle redirect
+      getRedirectResult(auth).catch(() => {});
+
+      authUnsub = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        if (u) {
+          const sRef = doc(db, 'userStats', u.uid);
+          statsUnsub = onSnapshot(sRef, (s) => {
+            if (s.exists()) {
+              setInitialSettings(prev => ({ ...prev, ...s.data() }));
+            }
+            setLoading(false);
+          });
+        } else {
           setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
+        }
+      });
+    };
 
-    // Handle redirect results silently
-    getRedirectResult(auth).catch(() => {});
+    // Delay auth initialization slightly to prioritize Landing Page rendering
+    const timer = setTimeout(initAuth, 100);
 
-    return () => authUnsub();
+    return () => {
+      if (authUnsub) authUnsub();
+      if (statsUnsub) statsUnsub();
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
     <AppProvider initialSettings={initialSettings} user={user}>
-      <AppContent user={user} loading={loading} handleLogin={handleLogin} handleLogout={handleLogout} />
+      <main className="min-h-screen bg-apple-bg">
+        {loading && !user ? (
+          <div className="min-h-screen bg-apple-bg flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--accent-color)] shadow-xl flex items-center justify-center text-white text-3xl font-bold animate-pulse">D</div>
+          </div>
+        ) : !user ? (
+          <LandingPage handleLogin={handleLogin} />
+        ) : (
+          <PrivateApp user={user} handleLogout={handleLogout} />
+        )}
+      </main>
     </AppProvider>
   );
 }
