@@ -181,41 +181,43 @@ function AppContent({ user, loading, handleLogin, handleLogout }) {
 
   return (
     <div className="min-h-screen bg-apple-bg transition-colors duration-500 selection:bg-[var(--accent-color)] selection:text-white relative">
-      {!user ? (
-        <LandingPage handleLogin={handleLogin} />
-      ) : (
-        <div className="min-h-screen bg-apple-bg transition-colors duration-500">
-          <Suspense fallback={null}>
-            <BackgroundBlobs />
-          </Suspense>
-          <Dashboard 
-            user={user} logs={logs} streak={streak} heatmapData={heatmapData} 
-            activeTagFilter={activeTagFilter} setActiveTagFilter={setActiveTagFilter} getTagColor={getTagColor}
-            isEvening={isEvening} isSunday={isSunday} isLastDayOfMonth={isLastDayOfMonth}
-            hasDailyTop={hasDailyTop} hasWeeklyTop={hasWeeklyTop} hasMonthlyTop={hasMonthlyTop}
-            setIsSettingsOpen={setIsSettingsOpen} setReflectionType={setReflectionType}
-            setIsAIModalOpen={setIsAIModalOpen}
-            handleDelete={deleteLog} onUpdate={updateLog}
-            isInputExpanded={isInputExpanded} setIsInputExpanded={setIsInputExpanded}
-            inputText={inputText} setInputText={setInputText} addLog={handleAddLog}
-            inputRef={inputRef} onShare={(log) => setSharingLog(log)} memoryLog={memoryLog}
-          />
+      <main>
+        {!user ? (
+          <LandingPage handleLogin={handleLogin} />
+        ) : (
+          <div className="min-h-screen bg-apple-bg transition-colors duration-500">
+            <Suspense fallback={null}>
+              <BackgroundBlobs />
+            </Suspense>
+            <Dashboard 
+              user={user} logs={logs} streak={streak} heatmapData={heatmapData} 
+              activeTagFilter={activeTagFilter} setActiveTagFilter={setActiveTagFilter} getTagColor={getTagColor}
+              isEvening={isEvening} isSunday={isSunday} isLastDayOfMonth={isLastDayOfMonth}
+              hasDailyTop={hasDailyTop} hasWeeklyTop={hasWeeklyTop} hasMonthlyTop={hasMonthlyTop}
+              setIsSettingsOpen={setIsSettingsOpen} setReflectionType={setReflectionType}
+              setIsAIModalOpen={setIsAIModalOpen}
+              handleDelete={deleteLog} onUpdate={updateLog}
+              isInputExpanded={isInputExpanded} setIsInputExpanded={setIsInputExpanded}
+              inputText={inputText} setInputText={setInputText} addLog={handleAddLog}
+              inputRef={inputRef} onShare={(log) => setSharingLog(log)} memoryLog={memoryLog}
+            />
 
-          <Suspense fallback={<ModalLoading />}>
-            <SettingsModal 
-              isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
-              handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
-              exportData={exportData} deleteAllData={deleteAllData} updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
-            />
-            <ReflectionModal 
-              isOpen={!!reflectionType} type={reflectionType} candidates={candidates} onSelect={handleSelectTopWin}
-              onClose={() => setReflectionType(null)} getTagColor={getTagColor}
-            />
-            <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
-            <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} logs={logs} />
-          </Suspense>
-        </div>
-      )}
+            <Suspense fallback={<ModalLoading />}>
+              <SettingsModal 
+                isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} user={user} 
+                handleLogout={() => { setIsSettingsOpen(false); handleLogout(); }}
+                exportData={exportData} deleteAllData={deleteAllData} updateAvailable={updateAvailable} onUpdate={() => window.manualPwaUpdate()}
+              />
+              <ReflectionModal 
+                isOpen={!!reflectionType} type={reflectionType} candidates={candidates} onSelect={handleSelectTopWin}
+                onClose={() => setReflectionType(null)} getTagColor={getTagColor}
+              />
+              <VictoryCard isOpen={!!sharingLog} log={sharingLog} onClose={() => setSharingLog(null)} />
+              <AIInsightModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} logs={logs} />
+            </Suspense>
+          </div>
+        )}
+      </main>
       
       <AnimatePresence>
         {feedback && (

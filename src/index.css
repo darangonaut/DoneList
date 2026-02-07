@@ -5,7 +5,7 @@
   --color-apple-card: var(--apple-card);
   --color-apple-border: var(--apple-border);
   --color-apple-text: var(--apple-text);
-  --color-apple-secondary: light-dark(#8E8E93, #98989D);
+  --color-apple-secondary: light-dark(#636366, #AEAEB2);
   --color-accent: var(--accent-color);
 }
 
